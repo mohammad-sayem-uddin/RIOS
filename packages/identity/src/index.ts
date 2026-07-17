@@ -15,6 +15,9 @@ export {
   InvalidConfidenceLevelError,
   InvalidResearchVisionError,
   InvalidResearchIdentitySummaryError,
+  IdentityCreationInvariantError,
+  AggregateInvariantViolationError,
+  InvalidEntityReferenceError,
 } from './domain/errors/identity-errors.js';
 
 // ─── Value Objects ─────────────────────────────────────────────────────
@@ -40,3 +43,9 @@ export { ResearchEvolution } from './domain/entities/research-evolution.js';
 export { ResearchMilestone } from './domain/entities/research-milestone.js';
 export { ResearchGoal } from './domain/entities/research-goal.js';
 export { ResearchContribution } from './domain/entities/research-contribution.js';
+
+// ─── Aggregate Root ────────────────────────────────────────────────────
+export {
+  ResearchIdentity,
+  type ReadonlyResearchIdentitySnapshot,
+} from './domain/aggregate/research-identity.js';

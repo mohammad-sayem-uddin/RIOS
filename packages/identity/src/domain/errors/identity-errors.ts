@@ -612,3 +612,162 @@ export class EntityItemNotFoundError extends IdentityInvariantViolationError {
     this.name = 'EntityItemNotFoundError';
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concrete Aggregate-Level Errors
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Purpose:
+ * Raised when a Research Identity cannot be found by its identifier.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 9; Volume I Chapter 8 structural integrity.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Every repository lookup must resolve to a valid aggregate.
+ */
+export class ResearchIdentityNotFoundError extends IdentityDomainError {
+  constructor(identifier: string) {
+    super(`Research Identity not found: ${identifier}`, 'IDENTITY_NOT_FOUND', 404);
+    this.name = 'ResearchIdentityNotFoundError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when attempting to create a Research Identity that already exists.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 9; Volume I Chapter 9 foundational constraints.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Each Research Identity must be unique. Duplicate identities violate
+ * foundational constraints.
+ */
+export class DuplicateResearchIdentityError extends IdentityDomainError {
+  constructor(identifier: string) {
+    super(`Duplicate Research Identity detected: ${identifier}`, 'IDENTITY_DUPLICATE', 409);
+    this.name = 'DuplicateResearchIdentityError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a domain type or entity type is not supported within
+ * the Identity domain.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 9; Volume I Chapter 3 ontology.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Only architecturally defined domain types are permitted.
+ */
+export class UnsupportedDomainTypeError extends IdentityDomainError {
+  constructor(typeName: string) {
+    super(`Unsupported domain type: ${typeName}`, 'IDENTITY_UNSUPPORTED_DOMAIN_TYPE', 400);
+    this.name = 'UnsupportedDomainTypeError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when aggregate creation fails due to invariant violations.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 9; Volume I Chapter 9 constraints.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Aggregate must be created in a valid initial state.
+ */
+export class IdentityCreationInvariantError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(`Identity creation invariant violated: ${detail}`, 'IDENTITY_CREATION_INVARIANT', 400);
+    this.name = 'IdentityCreationInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when an aggregate-wide invariant is violated during mutation.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 9; Volume I Chapter 9 constraints.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Aggregate-wide consistency must be maintained across all mutations.
+ */
+export class AggregateInvariantViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(`Aggregate invariant violated: ${detail}`, 'AGGREGATE_INVARIANT_VIOLATION', 400);
+    this.name = 'AggregateInvariantViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when attempting to operate on an entity that does not belong
+ * to the aggregate or references an unknown entity.
+ *
+ * Architecture reference:
+ * Volume I Chapter 8 structural integrity; Domain Ownership Matrix.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * All entity references within the aggregate must be valid.
+ */
+export class InvalidEntityReferenceError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(`Invalid entity reference: ${detail}`, 'INVALID_ENTITY_REFERENCE', 400);
+    this.name = 'InvalidEntityReferenceError';
+  }
+}
+
+/**
+ * All identity domain errors re-exported for convenient access.
+ */
+export const IdentityErrors = {
+  ResearchIdentityNotFoundError,
+  DuplicateResearchIdentityError,
+  EntityItemNotFoundError,
+  DuplicateEntityItemError,
+  UnsupportedDomainTypeError,
+  IdentityCreationInvariantError,
+  AggregateInvariantViolationError,
+  InvalidEntityReferenceError,
+} as const;
