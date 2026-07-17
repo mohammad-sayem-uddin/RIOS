@@ -6,6 +6,8 @@ import {
   CollaborationType,
   ResearchStatus,
   ConfidenceLevel,
+  ResearchVisionStatement,
+  ResearchIdentitySummary,
 } from '../domain/value-objects/identity-value-objects.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,19 +16,31 @@ import {
 
 describe('ResearchStage', () => {
   describe('valid construction', () => {
-    const validStages = ['Undergraduate', 'Masters', 'PhD', 'Research Scientist'];
+    it('should create with valid stage "Undergraduate"', () => {
+      const result = ResearchStage.create('Undergraduate');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Undergraduate');
+    });
 
-    for (const stage of validStages) {
-      it(`should create ResearchStage with "${stage}"`, () => {
-        const result = ResearchStage.create(stage);
-        expect(result.isSuccess).toBe(true);
-        expect(result.value.value).toBe(stage);
-      });
-    }
-  });
+    it('should create with valid stage "Masters"', () => {
+      const result = ResearchStage.create('Masters');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Masters');
+    });
 
-  describe('whitespace trimming', () => {
-    it('should trim leading and trailing whitespace', () => {
+    it('should create with valid stage "PhD"', () => {
+      const result = ResearchStage.create('PhD');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('PhD');
+    });
+
+    it('should create with valid stage "Research Scientist"', () => {
+      const result = ResearchStage.create('Research Scientist');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Research Scientist');
+    });
+
+    it('should trim whitespace', () => {
       const result = ResearchStage.create('  PhD  ');
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe('PhD');
@@ -34,31 +48,20 @@ describe('ResearchStage', () => {
   });
 
   describe('invalid construction', () => {
-    it('should reject empty string', () => {
+    it('should fail with invalid stage', () => {
+      const result = ResearchStage.create('PostDoc');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('Invalid Research Stage');
+    });
+
+    it('should fail with empty string', () => {
       const result = ResearchStage.create('');
       expect(result.isFailure).toBe(true);
     });
 
-    it('should reject whitespace-only string', () => {
-      const result = ResearchStage.create('   ');
-      expect(result.isFailure).toBe(true);
-    });
-
-    it('should reject invalid stage value', () => {
-      const result = ResearchStage.create('PostDoc');
-      expect(result.isFailure).toBe(true);
-    });
-
-    it('should reject case-mismatched value', () => {
+    it('should fail with case-sensitive mismatch', () => {
       const result = ResearchStage.create('phd');
       expect(result.isFailure).toBe(true);
-    });
-
-    it('should provide descriptive error message', () => {
-      const result = ResearchStage.create('Invalid');
-      expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('Invalid Research Stage');
-      expect(result.error).toContain('Invalid');
     });
   });
 
@@ -74,20 +77,29 @@ describe('ResearchStage', () => {
       const b = ResearchStage.create('Masters').value;
       expect(a.equals(b)).toBe(false);
     });
+
+    it('should not be equal to null', () => {
+      const a = ResearchStage.create('PhD').value;
+      expect(a.equals(null as never)).toBe(false);
+    });
   });
 
   describe('immutability', () => {
-    it('should expose value via getter only', () => {
+    it('should have frozen props', () => {
       const stage = ResearchStage.create('PhD').value;
-      expect(stage.value).toBe('PhD');
-      expect(typeof stage.value).toBe('string');
+      expect(Object.isFrozen(stage)).toBe(true);
     });
   });
 
   describe('serialization', () => {
-    it('toString should return canonical value', () => {
-      const stage = ResearchStage.create('Research Scientist').value;
-      expect(stage.toString()).toBe('Research Scientist');
+    it('toString should return the string value', () => {
+      const stage = ResearchStage.create('PhD').value;
+      expect(stage.toString()).toBe('PhD');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const stage = ResearchStage.create('PhD').value;
+      expect(stage.toJSON()).toEqual({ value: 'PhD' });
     });
   });
 });
@@ -98,93 +110,103 @@ describe('ResearchStage', () => {
 
 describe('ResearchFocus', () => {
   describe('valid construction', () => {
-    it('should create with a valid focus string', () => {
-      const result = ResearchFocus.create('Machine Learning');
+    it('should create with valid string', () => {
+      const result = ResearchFocus.create('Trustworthy AI');
       expect(result.isSuccess).toBe(true);
-      expect(result.value.value).toBe('Machine Learning');
+      expect(result.value.value).toBe('Trustworthy AI');
     });
 
-    it('should create with minimum length (1 char)', () => {
+    it('should trim leading and trailing whitespace', () => {
+      const result = ResearchFocus.create('  Trustworthy AI  ');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Trustworthy AI');
+    });
+
+    it('should accept single character', () => {
       const result = ResearchFocus.create('A');
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe('A');
     });
 
-    it('should create with maximum length (200 chars)', () => {
-      const maxFocus = 'A'.repeat(200);
-      const result = ResearchFocus.create(maxFocus);
+    it('should accept exactly 200 characters', () => {
+      const value = 'A'.repeat(200);
+      const result = ResearchFocus.create(value);
       expect(result.isSuccess).toBe(true);
-      expect(result.value.value).toBe(maxFocus);
-    });
-  });
-
-  describe('normalization', () => {
-    it('should trim leading and trailing whitespace', () => {
-      const result = ResearchFocus.create('  Quantum Computing  ');
-      expect(result.isSuccess).toBe(true);
-      expect(result.value.value).toBe('Quantum Computing');
-    });
-
-    it('should preserve internal whitespace', () => {
-      const result = ResearchFocus.create('Machine  Learning');
-      expect(result.isSuccess).toBe(true);
-      expect(result.value.value).toBe('Machine  Learning');
+      expect(result.value.value).toBe(value);
     });
   });
 
   describe('invalid construction', () => {
-    it('should reject empty string', () => {
+    it('should fail with null', () => {
+      const result = ResearchFocus.create(null as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with undefined', () => {
+      const result = ResearchFocus.create(undefined as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with empty string', () => {
       const result = ResearchFocus.create('');
       expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('must not be empty');
+      expect(result.error).toContain('empty or whitespace');
     });
 
-    it('should reject whitespace-only string', () => {
+    it('should fail with whitespace-only string', () => {
       const result = ResearchFocus.create('   ');
       expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('must not be empty');
+      expect(result.error).toContain('empty or whitespace');
     });
 
-    it('should reject string exceeding 200 characters', () => {
-      const tooLong = 'A'.repeat(201);
-      const result = ResearchFocus.create(tooLong);
+    it('should fail exceeding max length', () => {
+      const result = ResearchFocus.create('A'.repeat(201));
       expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('exceeds maximum length');
+      expect(result.error).toContain('maximum length');
     });
   });
 
   describe('equality', () => {
     it('should be equal for same value', () => {
-      const a = ResearchFocus.create('AI').value;
-      const b = ResearchFocus.create('AI').value;
+      const a = ResearchFocus.create('Trustworthy AI').value;
+      const b = ResearchFocus.create('Trustworthy AI').value;
       expect(a.equals(b)).toBe(true);
     });
 
     it('should not be equal for different values', () => {
-      const a = ResearchFocus.create('AI').value;
-      const b = ResearchFocus.create('ML').value;
+      const a = ResearchFocus.create('Trustworthy AI').value;
+      const b = ResearchFocus.create('Computer Vision').value;
       expect(a.equals(b)).toBe(false);
-    });
-
-    it('should be equal after trimming yields same value', () => {
-      const a = ResearchFocus.create('AI').value;
-      const b = ResearchFocus.create('  AI  ').value;
-      expect(a.equals(b)).toBe(true);
     });
   });
 
   describe('immutability', () => {
-    it('should expose value via getter only', () => {
-      const focus = ResearchFocus.create('NLP').value;
-      expect(focus.value).toBe('NLP');
-      expect(typeof focus.value).toBe('string');
+    it('should have frozen props', () => {
+      const focus = ResearchFocus.create('Trustworthy AI').value;
+      expect(Object.isFrozen(focus)).toBe(true);
     });
   });
 
   describe('serialization', () => {
-    it('toString should return trimmed value', () => {
-      const focus = ResearchFocus.create('  Deep Learning  ').value;
-      expect(focus.toString()).toBe('Deep Learning');
+    it('toString should return the string value', () => {
+      const focus = ResearchFocus.create('Trustworthy AI').value;
+      expect(focus.toString()).toBe('Trustworthy AI');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const focus = ResearchFocus.create('Trustworthy AI').value;
+      expect(focus.toJSON()).toEqual({ value: 'Trustworthy AI' });
+    });
+  });
+
+  describe('normalization', () => {
+    it('should collapse internal whitespace only via trim', () => {
+      const result = ResearchFocus.create('  Trustworthy   AI  ');
+      expect(result.isSuccess).toBe(true);
+      // trim() only removes leading/trailing
+      expect(result.value.value).toBe('Trustworthy   AI');
     });
   });
 });
@@ -195,19 +217,25 @@ describe('ResearchFocus', () => {
 
 describe('CollaborationType', () => {
   describe('valid construction', () => {
-    const validTypes = ['Individual', 'Academic', 'Industry'];
+    it('should create with "Individual"', () => {
+      const result = CollaborationType.create('Individual');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Individual');
+    });
 
-    for (const collabType of validTypes) {
-      it(`should create CollaborationType with "${collabType}"`, () => {
-        const result = CollaborationType.create(collabType);
-        expect(result.isSuccess).toBe(true);
-        expect(result.value.value).toBe(collabType);
-      });
-    }
-  });
+    it('should create with "Academic"', () => {
+      const result = CollaborationType.create('Academic');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Academic');
+    });
 
-  describe('whitespace trimming', () => {
-    it('should trim leading and trailing whitespace', () => {
+    it('should create with "Industry"', () => {
+      const result = CollaborationType.create('Industry');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Industry');
+    });
+
+    it('should trim whitespace', () => {
       const result = CollaborationType.create('  Academic  ');
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe('Academic');
@@ -215,20 +243,43 @@ describe('CollaborationType', () => {
   });
 
   describe('invalid construction', () => {
-    it('should reject empty string', () => {
-      const result = CollaborationType.create('');
-      expect(result.isFailure).toBe(true);
-    });
-
-    it('should reject invalid type', () => {
+    it('should fail with invalid type', () => {
       const result = CollaborationType.create('Government');
       expect(result.isFailure).toBe(true);
       expect(result.error).toContain('Invalid Collaboration Type');
     });
 
-    it('should reject case-mismatched value', () => {
+    it('should fail with empty string', () => {
+      const result = CollaborationType.create('');
+      expect(result.isFailure).toBe(true);
+    });
+
+    it('should fail with case-sensitive mismatch', () => {
       const result = CollaborationType.create('individual');
       expect(result.isFailure).toBe(true);
+    });
+  });
+
+  describe('convenience getters', () => {
+    it('isIndividual should return true for Individual', () => {
+      const ct = CollaborationType.create('Individual').value;
+      expect(ct.isIndividual).toBe(true);
+      expect(ct.isAcademic).toBe(false);
+      expect(ct.isIndustry).toBe(false);
+    });
+
+    it('isAcademic should return true for Academic', () => {
+      const ct = CollaborationType.create('Academic').value;
+      expect(ct.isAcademic).toBe(true);
+      expect(ct.isIndividual).toBe(false);
+      expect(ct.isIndustry).toBe(false);
+    });
+
+    it('isIndustry should return true for Industry', () => {
+      const ct = CollaborationType.create('Industry').value;
+      expect(ct.isIndustry).toBe(true);
+      expect(ct.isIndividual).toBe(false);
+      expect(ct.isAcademic).toBe(false);
     });
   });
 
@@ -247,17 +298,21 @@ describe('CollaborationType', () => {
   });
 
   describe('immutability', () => {
-    it('should expose value via getter only', () => {
-      const ct = CollaborationType.create('Individual').value;
-      expect(ct.value).toBe('Individual');
-      expect(typeof ct.value).toBe('string');
+    it('should have frozen props', () => {
+      const ct = CollaborationType.create('Academic').value;
+      expect(Object.isFrozen(ct)).toBe(true);
     });
   });
 
   describe('serialization', () => {
-    it('toString should return canonical value', () => {
-      const ct = CollaborationType.create('Industry').value;
-      expect(ct.toString()).toBe('Industry');
+    it('toString should return the string value', () => {
+      const ct = CollaborationType.create('Academic').value;
+      expect(ct.toString()).toBe('Academic');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const ct = CollaborationType.create('Academic').value;
+      expect(ct.toJSON()).toEqual({ value: 'Academic' });
     });
   });
 });
@@ -268,22 +323,46 @@ describe('CollaborationType', () => {
 
 describe('ResearchStatus', () => {
   describe('valid construction', () => {
-    const validStatuses = ['Active', 'Exploratory', 'Archived'];
+    it('should create with "Active"', () => {
+      const result = ResearchStatus.create('Active');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Active');
+    });
 
-    for (const status of validStatuses) {
-      it(`should create ResearchStatus with "${status}"`, () => {
-        const result = ResearchStatus.create(status);
-        expect(result.isSuccess).toBe(true);
-        expect(result.value.value).toBe(status);
-      });
-    }
-  });
+    it('should create with "Exploratory"', () => {
+      const result = ResearchStatus.create('Exploratory');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Exploratory');
+    });
 
-  describe('whitespace trimming', () => {
-    it('should trim leading and trailing whitespace', () => {
+    it('should create with "Archived"', () => {
+      const result = ResearchStatus.create('Archived');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Archived');
+    });
+
+    it('should trim whitespace', () => {
       const result = ResearchStatus.create('  Active  ');
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe('Active');
+    });
+  });
+
+  describe('invalid construction', () => {
+    it('should fail with invalid status', () => {
+      const result = ResearchStatus.create('Inactive');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('Invalid Research Status');
+    });
+
+    it('should fail with empty string', () => {
+      const result = ResearchStatus.create('');
+      expect(result.isFailure).toBe(true);
+    });
+
+    it('should fail with case-sensitive mismatch', () => {
+      const result = ResearchStatus.create('active');
+      expect(result.isFailure).toBe(true);
     });
   });
 
@@ -297,34 +376,16 @@ describe('ResearchStatus', () => {
 
     it('isExploratory should return true for Exploratory', () => {
       const status = ResearchStatus.create('Exploratory').value;
-      expect(status.isActive).toBe(false);
       expect(status.isExploratory).toBe(true);
+      expect(status.isActive).toBe(false);
       expect(status.isArchived).toBe(false);
     });
 
     it('isArchived should return true for Archived', () => {
       const status = ResearchStatus.create('Archived').value;
+      expect(status.isArchived).toBe(true);
       expect(status.isActive).toBe(false);
       expect(status.isExploratory).toBe(false);
-      expect(status.isArchived).toBe(true);
-    });
-  });
-
-  describe('invalid construction', () => {
-    it('should reject empty string', () => {
-      const result = ResearchStatus.create('');
-      expect(result.isFailure).toBe(true);
-    });
-
-    it('should reject invalid status', () => {
-      const result = ResearchStatus.create('Inactive');
-      expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('Invalid Research Status');
-    });
-
-    it('should reject case-mismatched value', () => {
-      const result = ResearchStatus.create('active');
-      expect(result.isFailure).toBe(true);
     });
   });
 
@@ -343,17 +404,21 @@ describe('ResearchStatus', () => {
   });
 
   describe('immutability', () => {
-    it('should expose value via getter only', () => {
+    it('should have frozen props', () => {
       const status = ResearchStatus.create('Active').value;
-      expect(status.value).toBe('Active');
-      expect(typeof status.value).toBe('string');
+      expect(Object.isFrozen(status)).toBe(true);
     });
   });
 
   describe('serialization', () => {
-    it('toString should return canonical value', () => {
-      const status = ResearchStatus.create('Exploratory').value;
-      expect(status.toString()).toBe('Exploratory');
+    it('toString should return the string value', () => {
+      const status = ResearchStatus.create('Active').value;
+      expect(status.toString()).toBe('Active');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const status = ResearchStatus.create('Active').value;
+      expect(status.toJSON()).toEqual({ value: 'Active' });
     });
   });
 });
@@ -364,59 +429,55 @@ describe('ResearchStatus', () => {
 
 describe('ConfidenceLevel', () => {
   describe('valid construction', () => {
-    for (let level = 1; level <= 5; level++) {
-      it(`should create ConfidenceLevel with ${level}`, () => {
-        const result = ConfidenceLevel.create(level);
-        expect(result.isSuccess).toBe(true);
-        expect(result.value.value).toBe(level);
-      });
-    }
-  });
-
-  describe('boundary values', () => {
-    it('should accept minimum value (1)', () => {
+    it('should create with minimum value 1', () => {
       const result = ConfidenceLevel.create(1);
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe(1);
     });
 
-    it('should accept maximum value (5)', () => {
+    it('should create with maximum value 5', () => {
       const result = ConfidenceLevel.create(5);
       expect(result.isSuccess).toBe(true);
       expect(result.value.value).toBe(5);
     });
+
+    it('should create with mid-range value 3', () => {
+      const result = ConfidenceLevel.create(3);
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe(3);
+    });
   });
 
   describe('invalid construction', () => {
-    it('should reject value below minimum (0)', () => {
+    it('should fail with value below minimum', () => {
       const result = ConfidenceLevel.create(0);
       expect(result.isFailure).toBe(true);
       expect(result.error).toContain('Invalid Confidence Level');
     });
 
-    it('should reject value above maximum (6)', () => {
+    it('should fail with negative value', () => {
+      const result = ConfidenceLevel.create(-1);
+      expect(result.isFailure).toBe(true);
+    });
+
+    it('should fail with value above maximum', () => {
       const result = ConfidenceLevel.create(6);
       expect(result.isFailure).toBe(true);
       expect(result.error).toContain('Invalid Confidence Level');
     });
 
-    it('should reject negative value', () => {
-      const result = ConfidenceLevel.create(-1);
-      expect(result.isFailure).toBe(true);
-    });
-
-    it('should reject floating point value', () => {
+    it('should fail with floating point value', () => {
       const result = ConfidenceLevel.create(3.5);
       expect(result.isFailure).toBe(true);
       expect(result.error).toContain('Invalid Confidence Level');
     });
 
-    it('should reject NaN', () => {
+    it('should fail with NaN', () => {
       const result = ConfidenceLevel.create(Number.NaN);
       expect(result.isFailure).toBe(true);
     });
 
-    it('should reject Infinity', () => {
+    it('should fail with Infinity', () => {
       const result = ConfidenceLevel.create(Number.POSITIVE_INFINITY);
       expect(result.isFailure).toBe(true);
     });
@@ -437,17 +498,303 @@ describe('ConfidenceLevel', () => {
   });
 
   describe('immutability', () => {
-    it('should expose value via getter only', () => {
-      const cl = ConfidenceLevel.create(4).value;
-      expect(cl.value).toBe(4);
-      expect(typeof cl.value).toBe('number');
+    it('should have frozen props', () => {
+      const cl = ConfidenceLevel.create(3).value;
+      expect(Object.isFrozen(cl)).toBe(true);
     });
   });
 
   describe('serialization', () => {
-    it('toString should return string representation', () => {
+    it('toString should return the string representation', () => {
       const cl = ConfidenceLevel.create(3).value;
       expect(cl.toString()).toBe('3');
     });
+
+    it('toJSON should return a plain object', () => {
+      const cl = ConfidenceLevel.create(3).value;
+      expect(cl.toJSON()).toEqual({ value: 3 });
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should accept boundary value 1', () => {
+      const result = ConfidenceLevel.create(1);
+      expect(result.isSuccess).toBe(true);
+    });
+
+    it('should reject boundary value 0', () => {
+      const result = ConfidenceLevel.create(0);
+      expect(result.isFailure).toBe(true);
+    });
+
+    it('should accept boundary value 5', () => {
+      const result = ConfidenceLevel.create(5);
+      expect(result.isSuccess).toBe(true);
+    });
+
+    it('should reject boundary value 6', () => {
+      const result = ConfidenceLevel.create(6);
+      expect(result.isFailure).toBe(true);
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ResearchVision
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ResearchVisionStatement', () => {
+  describe('valid construction', () => {
+    it('should create with valid string', () => {
+      const result = ResearchVisionStatement.create(
+        'Advancing trustworthy AI through rigorous formal verification.',
+      );
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe(
+        'Advancing trustworthy AI through rigorous formal verification.',
+      );
+    });
+
+    it('should trim leading and trailing whitespace', () => {
+      const result = ResearchVisionStatement.create('  Advancing trustworthy AI  ');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Advancing trustworthy AI');
+    });
+
+    it('should accept single character', () => {
+      const result = ResearchVisionStatement.create('A');
+      expect(result.isSuccess).toBe(true);
+    });
+
+    it('should accept exactly 2000 characters', () => {
+      const value = 'A'.repeat(2000);
+      const result = ResearchVisionStatement.create(value);
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe(value);
+    });
+  });
+
+  describe('invalid construction', () => {
+    it('should fail with null', () => {
+      const result = ResearchVisionStatement.create(null as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with undefined', () => {
+      const result = ResearchVisionStatement.create(undefined as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with empty string', () => {
+      const result = ResearchVisionStatement.create('');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('empty or whitespace');
+    });
+
+    it('should fail with whitespace-only string', () => {
+      const result = ResearchVisionStatement.create('   ');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('empty or whitespace');
+    });
+
+    it('should fail exceeding max length', () => {
+      const result = ResearchVisionStatement.create('A'.repeat(2001));
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('maximum length');
+    });
+  });
+
+  describe('equality', () => {
+    it('should be equal for same value', () => {
+      const a = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      const b = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      expect(a.equals(b)).toBe(true);
+    });
+
+    it('should not be equal for different values', () => {
+      const a = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      const b = ResearchVisionStatement.create('Improving medical imaging.').value;
+      expect(a.equals(b)).toBe(false);
+    });
+  });
+
+  describe('immutability', () => {
+    it('should have frozen props', () => {
+      const vision = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      expect(Object.isFrozen(vision)).toBe(true);
+    });
+  });
+
+  describe('serialization', () => {
+    it('toString should return the string value', () => {
+      const vision = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      expect(vision.toString()).toBe('Advancing trustworthy AI.');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const vision = ResearchVisionStatement.create('Advancing trustworthy AI.').value;
+      expect(vision.toJSON()).toEqual({ value: 'Advancing trustworthy AI.' });
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ResearchIdentitySummary
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ResearchIdentitySummary', () => {
+  describe('valid construction', () => {
+    it('should create with valid string', () => {
+      const result = ResearchIdentitySummary.create(
+        'A researcher specializing in trustworthy AI and formal verification.',
+      );
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe(
+        'A researcher specializing in trustworthy AI and formal verification.',
+      );
+    });
+
+    it('should trim leading and trailing whitespace', () => {
+      const result = ResearchIdentitySummary.create('  Summary of research  ');
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe('Summary of research');
+    });
+
+    it('should accept single character', () => {
+      const result = ResearchIdentitySummary.create('A');
+      expect(result.isSuccess).toBe(true);
+    });
+
+    it('should accept exactly 500 characters', () => {
+      const value = 'A'.repeat(500);
+      const result = ResearchIdentitySummary.create(value);
+      expect(result.isSuccess).toBe(true);
+      expect(result.value.value).toBe(value);
+    });
+  });
+
+  describe('invalid construction', () => {
+    it('should fail with null', () => {
+      const result = ResearchIdentitySummary.create(null as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with undefined', () => {
+      const result = ResearchIdentitySummary.create(undefined as never);
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('null or undefined');
+    });
+
+    it('should fail with empty string', () => {
+      const result = ResearchIdentitySummary.create('');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('empty or whitespace');
+    });
+
+    it('should fail with whitespace-only string', () => {
+      const result = ResearchIdentitySummary.create('   ');
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('empty or whitespace');
+    });
+
+    it('should fail exceeding max length', () => {
+      const result = ResearchIdentitySummary.create('A'.repeat(501));
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toContain('maximum length');
+    });
+  });
+
+  describe('equality', () => {
+    it('should be equal for same value', () => {
+      const a = ResearchIdentitySummary.create('Summary text.').value;
+      const b = ResearchIdentitySummary.create('Summary text.').value;
+      expect(a.equals(b)).toBe(true);
+    });
+
+    it('should not be equal for different values', () => {
+      const a = ResearchIdentitySummary.create('Summary A.').value;
+      const b = ResearchIdentitySummary.create('Summary B.').value;
+      expect(a.equals(b)).toBe(false);
+    });
+  });
+
+  describe('immutability', () => {
+    it('should have frozen props', () => {
+      const summary = ResearchIdentitySummary.create('Summary text.').value;
+      expect(Object.isFrozen(summary)).toBe(true);
+    });
+  });
+
+  describe('serialization', () => {
+    it('toString should return the string value', () => {
+      const summary = ResearchIdentitySummary.create('Summary text.').value;
+      expect(summary.toString()).toBe('Summary text.');
+    });
+
+    it('toJSON should return a plain object', () => {
+      const summary = ResearchIdentitySummary.create('Summary text.').value;
+      expect(summary.toJSON()).toEqual({ value: 'Summary text.' });
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cross-cutting: Value Object principles
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Value Object principles', () => {
+  it('should use structural equality, not reference equality', () => {
+    const a = ResearchStage.create('PhD').value;
+    const b = ResearchStage.create('PhD').value;
+    expect(a === b).toBe(false); // different references
+    expect(a.equals(b)).toBe(true); // structural equality
+  });
+
+  it('all VOs should be serializable via JSON.stringify', () => {
+    const stage = ResearchStage.create('PhD').value;
+    const focus = ResearchFocus.create('AI').value;
+    const collab = CollaborationType.create('Academic').value;
+    const status = ResearchStatus.create('Active').value;
+    const confidence = ConfidenceLevel.create(3).value;
+    const vision = ResearchVisionStatement.create('Long-term direction.').value;
+    const summary = ResearchIdentitySummary.create('Identity summary.').value;
+
+    expect(() => JSON.stringify(stage.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(focus.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(collab.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(status.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(confidence.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(vision.toJSON())).not.toThrow();
+    expect(() => JSON.stringify(summary.toJSON())).not.toThrow();
+  });
+
+  it('equality should be symmetric', () => {
+    const a = ResearchFocus.create('AI Safety').value;
+    const b = ResearchFocus.create('AI Safety').value;
+    expect(a.equals(b)).toBe(b.equals(a));
+  });
+
+  it('equality should be reflexive', () => {
+    const a = ResearchFocus.create('AI Safety').value;
+    expect(a.equals(a)).toBe(true);
+  });
+
+  it('equality should be transitive', () => {
+    const a = ResearchFocus.create('AI Safety').value;
+    const b = ResearchFocus.create('AI Safety').value;
+    const c = ResearchFocus.create('AI Safety').value;
+    expect(a.equals(b)).toBe(true);
+    expect(b.equals(c)).toBe(true);
+    expect(a.equals(c)).toBe(true);
+  });
+
+  it('equality should fail gracefully across different VO types', () => {
+    const stage = ResearchStage.create('PhD').value;
+    const focus = ResearchFocus.create('PhD').value;
+    // Different constructor names, should not be equal
+    expect(stage.equals(focus as never)).toBe(false);
   });
 });

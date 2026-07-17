@@ -242,3 +242,373 @@ export class InvalidConfidenceLevelError extends IdentityInvariantViolationError
     this.name = 'InvalidConfidenceLevelError';
   }
 }
+
+/**
+ * Purpose:
+ * Raised when a Research Vision value violates length or content constraints.
+ *
+ * Architecture reference:
+ * ADR-103; Volume I Chapter 2 value object table; Volume I Chapter 5.
+ *
+ * ADR reference:
+ * ADR-103.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Vision must be a non-empty trimmed string of 1–2000 characters.
+ * Research Vision must represent long-term scientific direction.
+ */
+export class InvalidResearchVisionError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(`Invalid Research Vision: ${reason}`, 'IDENTITY_INVALID_RESEARCH_VISION', 400);
+    this.name = 'InvalidResearchVisionError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Identity Summary value violates length or content constraints.
+ *
+ * Architecture reference:
+ * ADR-101; Volume I Chapter 2 value object table; Volume I Chapter 7 Interface 1.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Identity Summary must be a non-empty trimmed string of 1–500 characters.
+ * Summary must provide concise representation of Research Identity.
+ */
+export class InvalidResearchIdentitySummaryError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Invalid Research Identity Summary: ${reason}`,
+      'IDENTITY_INVALID_RESEARCH_IDENTITY_SUMMARY',
+      400,
+    );
+    this.name = 'InvalidResearchIdentitySummaryError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Time Horizon value violates length or content constraints.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2; Volume I Chapter 5.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Time Horizon must be a non-empty trimmed string of 1–100 characters.
+ */
+export class InvalidTimeHorizonError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(`Invalid Time Horizon: ${reason}`, 'IDENTITY_INVALID_TIME_HORIZON', 400);
+    this.name = 'InvalidTimeHorizonError';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concrete Identity Entity Errors
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Purpose:
+ * Raised when a Research Agenda entity violates invariants during creation
+ * or mutation.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.1; Domain Model Specification Layer 9.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Agenda must be non-empty, long-lived, problem-oriented, and
+ * technology-independent.
+ */
+export class ResearchAgendaInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Agenda invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_AGENDA_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchAgendaInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Area entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.4; Volume I Chapter 8 Component C.
+ *
+ * ADR reference:
+ * ADR-101, ADR-106.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Area must represent a persistent scientific domain, not an
+ * implementation technology. Must contribute to Research Agenda.
+ */
+export class ResearchAreaInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(`Research Area invariant violated: ${reason}`, 'IDENTITY_RESEARCH_AREA_INVARIANT', 400);
+    this.name = 'ResearchAreaInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Question entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.4; Volume I Chapter 8 Component D.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Questions are permanent architectural entities. Questions exist
+ * before Projects. Research Questions must be non-empty and well-formed.
+ */
+export class ResearchQuestionInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Question invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_QUESTION_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchQuestionInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Philosophy entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.2; Volume I Chapter 8 Component E.
+ *
+ * ADR reference:
+ * ADR-005, ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Philosophy must remain independent of specific technologies.
+ * Research Philosophy explains WHY the researcher approaches problems.
+ */
+export class ResearchPhilosophyInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Philosophy invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_PHILOSOPHY_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchPhilosophyInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Values entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.3.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Values define non-technical principles. Values influence decisions.
+ * They are not achievements.
+ */
+export class ResearchValuesInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Values invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_VALUES_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchValuesInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Evolution entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.8; Volume I Chapter 4 evolution rules.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Evolution must preserve historical continuity and traceability.
+ * No historical identity shall be deleted. Evolution must be additive.
+ */
+export class ResearchEvolutionInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Evolution invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_EVOLUTION_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchEvolutionInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Milestone entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 4 section 4.7.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Milestones represent significant transitions. Milestones shall be recorded
+ * but shall not dominate the presentation of identity.
+ */
+export class ResearchMilestoneInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Milestone invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_MILESTONE_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchMilestoneInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Goal entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.7.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Goals translate Research Vision into measurable milestones.
+ * Goals may evolve. Vision should remain comparatively stable.
+ */
+export class ResearchGoalInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(`Research Goal invariant violated: ${reason}`, 'IDENTITY_RESEARCH_GOAL_INVARIANT', 400);
+    this.name = 'ResearchGoalInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Contribution entity violates invariants.
+ *
+ * Architecture reference:
+ * Volume I Chapter 3 section 3.5 semantic hierarchy.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Contributions represent original knowledge produced by the researcher.
+ * Contributions generate impact.
+ */
+export class ResearchContributionInvariantError extends IdentityInvariantViolationError {
+  constructor(reason: string) {
+    super(
+      `Research Contribution invariant violated: ${reason}`,
+      'IDENTITY_RESEARCH_CONTRIBUTION_INVARIANT',
+      400,
+    );
+    this.name = 'ResearchContributionInvariantError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a duplicate item is added to a protected entity collection.
+ *
+ * Architecture reference:
+ * Domain Model Specification Layer 8; Volume I Chapter 8 structural integrity.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Entity collections must prevent duplicates to maintain semantic integrity.
+ */
+export class DuplicateEntityItemError extends IdentityInvariantViolationError {
+  constructor(itemDescription: string) {
+    super(`Duplicate item detected: ${itemDescription}`, 'IDENTITY_DUPLICATE_ENTITY_ITEM', 400);
+    this.name = 'DuplicateEntityItemError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a requested item is not found within an entity collection.
+ *
+ * Architecture reference:
+ * Volume I Chapter 8 structural integrity.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Removing or updating a non-existent item violates structural integrity.
+ */
+export class EntityItemNotFoundError extends IdentityInvariantViolationError {
+  constructor(itemDescription: string) {
+    super(`Item not found: ${itemDescription}`, 'IDENTITY_ENTITY_ITEM_NOT_FOUND', 404);
+    this.name = 'EntityItemNotFoundError';
+  }
+}

@@ -1,38 +1,42 @@
-/**
- * @rios/identity
- *
- * Identity Domain Foundation — canonical Research Identity value objects and errors.
- * Exports immutable value objects that represent architectural Identity concepts.
- */
+// ─── Identity Domain Package ───────────────────────────────────────────
+// Architecture Reference: Volume I – Identity
 
-// Value Objects
-export {
-  ResearchStage,
-  ResearchFocus,
-  CollaborationType,
-  ResearchStatus,
-  ConfidenceLevel,
-} from './domain/value-objects/identity-value-objects.js';
-
-export type {
-  ResearchStageValue,
-  CollaborationTypeValue,
-  ResearchStatusValue,
-} from './domain/value-objects/identity-value-objects.js';
-
-// Errors
+// ─── Errors ────────────────────────────────────────────────────────────
 export {
   IdentityDomainError,
   IdentityInvariantViolationError,
-  IdentitySemanticNonConformanceError,
-  IdentityOwnershipViolationError,
-  IdentityDependencyViolationError,
+  DuplicateEntityItemError,
+  EntityItemNotFoundError,
+  InvalidTimeHorizonError,
   InvalidResearchStageError,
   InvalidResearchFocusError,
   InvalidCollaborationTypeError,
   InvalidResearchStatusError,
   InvalidConfidenceLevelError,
+  InvalidResearchVisionError,
+  InvalidResearchIdentitySummaryError,
 } from './domain/errors/identity-errors.js';
 
-// Contracts
-export type * from './domain/contracts/index.js';
+// ─── Value Objects ─────────────────────────────────────────────────────
+export {
+  ResearchStage,
+  ResearchFocus,
+  TimeHorizon,
+  CollaborationType,
+  ResearchStatus,
+  ConfidenceLevel,
+  ResearchVisionStatement,
+  ResearchIdentitySummary,
+} from './domain/value-objects/identity-value-objects.js';
+
+// ─── Entities ──────────────────────────────────────────────────────────
+export { ResearchVision } from './domain/entities/research-vision.js';
+export { ResearchAgenda } from './domain/entities/research-agenda.js';
+export { ResearchArea } from './domain/entities/research-area.js';
+export { ResearchQuestion } from './domain/entities/research-question.js';
+export { ResearchPhilosophy } from './domain/entities/research-philosophy.js';
+export { ResearchValues } from './domain/entities/research-values.js';
+export { ResearchEvolution } from './domain/entities/research-evolution.js';
+export { ResearchMilestone } from './domain/entities/research-milestone.js';
+export { ResearchGoal } from './domain/entities/research-goal.js';
+export { ResearchContribution } from './domain/entities/research-contribution.js';

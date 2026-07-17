@@ -1,144 +1,185 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
-  AcyclicSemanticDependencyPolicy,
-  AgendaEngine,
-  AreaManager,
-  CareerStageAdvanced,
-  CareerStageTransition,
-  CollaborationType,
-  ConfidenceLevel,
-  CrossDisciplinaryExpansion,
-  EvidenceBasedIdentityPolicy,
-  EvidenceLayer,
-  EvolutionLayer,
-  FoundationalPublicationReleased,
-  IdentityContextInterface,
-  IdentityDependencyViolationError,
-  IdentityDomainError,
-  IdentityHistoricalContinuityPolicy,
-  IdentityInvariantViolationError,
-  IdentityMilestoneRecorded,
-  IdentityOwnershipViolationError,
-  IdentityRepresentationIndependencePolicy,
-  IdentitySemanticNonConformanceError,
-  IdentitySummaryInterface,
-  IdentityTimelineInterface,
-  IdentityVersionPublished,
-  IntellectualTimeline,
-  InterfaceLayer,
-  MajorMethodologicalShift,
-  MajorResearchTransition,
-  NewResearchAreaAdopted,
-  PhilosophyLayer,
-  PhilosophyRevised,
-  PrimaryResearchAgendaPolicy,
-  ProfessionalContext,
-  QuestionRegistry,
-  RepresentationLayer,
-  ResearchAgenda,
-  ResearchAgendaCreated,
-  ResearchAgendaInterface,
-  ResearchAgendaUpdated,
-  ResearchArea,
-  ResearchAreaAdded,
-  ResearchAreaArchived,
-  ResearchAreasInterface,
-  ResearchDirectionChanged,
-  ResearchEvolution,
-  ResearchFocus,
-  ResearchGoals,
-  ResearchIdentity,
-  ResearchIdentityFactory,
-  ResearchPhilosophy,
-  ResearchPhilosophyInterface,
-  ResearchPhilosophyRefined,
-  ResearchPurpose,
-  ResearchQuestion,
+  // Value Objects
   ResearchStage,
+  ResearchFocus,
+  TimeHorizon,
+  CollaborationType,
   ResearchStatus,
-  ResearchValues,
+  ConfidenceLevel,
+  ResearchVisionStatement,
+  ResearchIdentitySummary,
+  // Errors
+  IdentityDomainError,
+  IdentityInvariantViolationError,
+  DuplicateEntityItemError,
+  EntityItemNotFoundError,
+  InvalidTimeHorizonError,
+  InvalidResearchStageError,
+  InvalidResearchFocusError,
+  InvalidCollaborationTypeError,
+  InvalidResearchStatusError,
+  InvalidConfidenceLevelError,
+  InvalidResearchVisionError,
+  InvalidResearchIdentitySummaryError,
+  // Entities
   ResearchVision,
-  ResearchVisionExpanded,
-  VisionEngine,
+  ResearchAgenda,
+  ResearchArea,
+  ResearchQuestion,
+  ResearchPhilosophy,
+  ResearchValues,
+  ResearchEvolution,
+  ResearchMilestone,
+  ResearchGoal,
+  ResearchContribution,
 } from '../index.js';
 
 describe('@rios/identity exports', () => {
-  it('exports the Identity aggregate placeholder', () => {
-    expect(ResearchIdentity).toBeDefined();
+  describe('Value Object exports', () => {
+    it('exports ResearchStage', () => {
+      expect(ResearchStage).toBeDefined();
+      expect(typeof ResearchStage.create).toBe('function');
+    });
+
+    it('exports ResearchFocus', () => {
+      expect(ResearchFocus).toBeDefined();
+      expect(typeof ResearchFocus.create).toBe('function');
+    });
+
+    it('exports TimeHorizon', () => {
+      expect(TimeHorizon).toBeDefined();
+      expect(typeof TimeHorizon.create).toBe('function');
+    });
+
+    it('exports CollaborationType', () => {
+      expect(CollaborationType).toBeDefined();
+      expect(typeof CollaborationType.create).toBe('function');
+    });
+
+    it('exports ResearchStatus', () => {
+      expect(ResearchStatus).toBeDefined();
+      expect(typeof ResearchStatus.create).toBe('function');
+    });
+
+    it('exports ConfidenceLevel', () => {
+      expect(ConfidenceLevel).toBeDefined();
+      expect(typeof ConfidenceLevel.create).toBe('function');
+    });
+
+    it('exports ResearchVisionStatement', () => {
+      expect(ResearchVisionStatement).toBeDefined();
+      expect(typeof ResearchVisionStatement.create).toBe('function');
+    });
+
+    it('exports ResearchIdentitySummary', () => {
+      expect(ResearchIdentitySummary).toBeDefined();
+      expect(typeof ResearchIdentitySummary.create).toBe('function');
+    });
   });
 
-  it('exports Identity entity placeholders', () => {
-    expect(ResearchPurpose).toBeDefined();
-    expect(ResearchAgenda).toBeDefined();
-    expect(ResearchPhilosophy).toBeDefined();
-    expect(ResearchValues).toBeDefined();
-    expect(ResearchArea).toBeDefined();
-    expect(ResearchQuestion).toBeDefined();
-    expect(IntellectualTimeline).toBeDefined();
-    expect(ResearchVision).toBeDefined();
-    expect(ResearchGoals).toBeDefined();
-    expect(ResearchEvolution).toBeDefined();
-    expect(ProfessionalContext).toBeDefined();
+  describe('Error exports', () => {
+    it('exports abstract IdentityDomainError', () => {
+      expect(IdentityDomainError).toBeDefined();
+    });
+
+    it('exports IdentityInvariantViolationError', () => {
+      expect(IdentityInvariantViolationError).toBeDefined();
+    });
+
+    it('exports DuplicateEntityItemError', () => {
+      expect(DuplicateEntityItemError).toBeDefined();
+    });
+
+    it('exports EntityItemNotFoundError', () => {
+      expect(EntityItemNotFoundError).toBeDefined();
+    });
+
+    it('exports InvalidTimeHorizonError', () => {
+      expect(InvalidTimeHorizonError).toBeDefined();
+    });
+
+    it('exports InvalidResearchStageError', () => {
+      expect(InvalidResearchStageError).toBeDefined();
+    });
+
+    it('exports InvalidResearchFocusError', () => {
+      expect(InvalidResearchFocusError).toBeDefined();
+    });
+
+    it('exports InvalidCollaborationTypeError', () => {
+      expect(InvalidCollaborationTypeError).toBeDefined();
+    });
+
+    it('exports InvalidResearchStatusError', () => {
+      expect(InvalidResearchStatusError).toBeDefined();
+    });
+
+    it('exports InvalidConfidenceLevelError', () => {
+      expect(InvalidConfidenceLevelError).toBeDefined();
+    });
+
+    it('exports InvalidResearchVisionError', () => {
+      expect(InvalidResearchVisionError).toBeDefined();
+    });
+
+    it('exports InvalidResearchIdentitySummaryError', () => {
+      expect(InvalidResearchIdentitySummaryError).toBeDefined();
+    });
   });
 
-  it('exports Identity value object placeholders', () => {
-    expect(ResearchStage).toBeDefined();
-    expect(ResearchFocus).toBeDefined();
-    expect(CollaborationType).toBeDefined();
-    expect(ResearchStatus).toBeDefined();
-    expect(ConfidenceLevel).toBeDefined();
-  });
+  describe('Entity exports', () => {
+    it('exports ResearchVision entity', () => {
+      expect(ResearchVision).toBeDefined();
+      expect(typeof ResearchVision.create).toBe('function');
+      expect(typeof ResearchVision.reconstitute).toBe('function');
+    });
 
-  it('exports Identity domain event placeholders', () => {
-    expect(ResearchAgendaCreated).toBeDefined();
-    expect(ResearchAgendaUpdated).toBeDefined();
-    expect(ResearchAreaAdded).toBeDefined();
-    expect(ResearchAreaArchived).toBeDefined();
-    expect(PhilosophyRevised).toBeDefined();
-    expect(ResearchPhilosophyRefined).toBeDefined();
-    expect(IdentityMilestoneRecorded).toBeDefined();
-    expect(CareerStageTransition).toBeDefined();
-    expect(CareerStageAdvanced).toBeDefined();
-    expect(IdentityVersionPublished).toBeDefined();
-    expect(MajorResearchTransition).toBeDefined();
-    expect(ResearchVisionExpanded).toBeDefined();
-    expect(ResearchDirectionChanged).toBeDefined();
-    expect(NewResearchAreaAdopted).toBeDefined();
-    expect(MajorMethodologicalShift).toBeDefined();
-    expect(CrossDisciplinaryExpansion).toBeDefined();
-    expect(FoundationalPublicationReleased).toBeDefined();
-  });
+    it('exports ResearchAgenda entity', () => {
+      expect(ResearchAgenda).toBeDefined();
+      expect(typeof ResearchAgenda.create).toBe('function');
+      expect(typeof ResearchAgenda.reconstitute).toBe('function');
+    });
 
-  it('exports Identity policies, factory, services, and errors', () => {
-    expect(IdentityRepresentationIndependencePolicy).toBeDefined();
-    expect(EvidenceBasedIdentityPolicy).toBeDefined();
-    expect(PrimaryResearchAgendaPolicy).toBeDefined();
-    expect(IdentityHistoricalContinuityPolicy).toBeDefined();
-    expect(AcyclicSemanticDependencyPolicy).toBeDefined();
-    expect(ResearchIdentityFactory).toBeDefined();
-    expect(VisionEngine).toBeDefined();
-    expect(AgendaEngine).toBeDefined();
-    expect(AreaManager).toBeDefined();
-    expect(QuestionRegistry).toBeDefined();
-    expect(PhilosophyLayer).toBeDefined();
-    expect(EvidenceLayer).toBeDefined();
-    expect(RepresentationLayer).toBeDefined();
-    expect(InterfaceLayer).toBeDefined();
-    expect(EvolutionLayer).toBeDefined();
-    expect(IdentityDomainError).toBeDefined();
-    expect(IdentityInvariantViolationError).toBeDefined();
-    expect(IdentitySemanticNonConformanceError).toBeDefined();
-    expect(IdentityOwnershipViolationError).toBeDefined();
-    expect(IdentityDependencyViolationError).toBeDefined();
-  });
+    it('exports ResearchArea entity', () => {
+      expect(ResearchArea).toBeDefined();
+      expect(typeof ResearchArea.create).toBe('function');
+    });
 
-  it('exports typed Identity contracts', () => {
-    expectTypeOf<IdentitySummaryInterface>().toBeObject();
-    expectTypeOf<ResearchAgendaInterface>().toBeObject();
-    expectTypeOf<ResearchPhilosophyInterface>().toBeObject();
-    expectTypeOf<ResearchAreasInterface>().toBeObject();
-    expectTypeOf<IdentityTimelineInterface>().toBeObject();
-    expectTypeOf<IdentityContextInterface>().toBeObject();
+    it('exports ResearchQuestion entity', () => {
+      expect(ResearchQuestion).toBeDefined();
+      expect(typeof ResearchQuestion.create).toBe('function');
+    });
+
+    it('exports ResearchPhilosophy entity', () => {
+      expect(ResearchPhilosophy).toBeDefined();
+      expect(typeof ResearchPhilosophy.create).toBe('function');
+    });
+
+    it('exports ResearchValues entity', () => {
+      expect(ResearchValues).toBeDefined();
+      expect(typeof ResearchValues.create).toBe('function');
+    });
+
+    it('exports ResearchEvolution entity', () => {
+      expect(ResearchEvolution).toBeDefined();
+      expect(typeof ResearchEvolution.create).toBe('function');
+    });
+
+    it('exports ResearchMilestone entity', () => {
+      expect(ResearchMilestone).toBeDefined();
+      expect(typeof ResearchMilestone.create).toBe('function');
+    });
+
+    it('exports ResearchGoal entity', () => {
+      expect(ResearchGoal).toBeDefined();
+      expect(typeof ResearchGoal.create).toBe('function');
+    });
+
+    it('exports ResearchContribution entity', () => {
+      expect(ResearchContribution).toBeDefined();
+      expect(typeof ResearchContribution.create).toBe('function');
+    });
   });
 });

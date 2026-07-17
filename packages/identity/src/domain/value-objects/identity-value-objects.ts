@@ -6,6 +6,9 @@ import {
   InvalidCollaborationTypeError,
   InvalidResearchStatusError,
   InvalidConfidenceLevelError,
+  InvalidResearchVisionError,
+  InvalidResearchIdentitySummaryError,
+  InvalidTimeHorizonError,
 } from '../errors/identity-errors.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,18 +48,23 @@ const VALID_RESEARCH_STATUSES = ['Active', 'Exploratory', 'Archived'] as const;
 export type ResearchStatusValue = (typeof VALID_RESEARCH_STATUSES)[number];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Research Focus constraints
+// Constants — length and boundary constraints
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RESEARCH_FOCUS_MIN_LENGTH = 1;
 const RESEARCH_FOCUS_MAX_LENGTH = 200;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Confidence Level constraints
-// ─────────────────────────────────────────────────────────────────────────────
-
 const CONFIDENCE_LEVEL_MIN = 1;
 const CONFIDENCE_LEVEL_MAX = 5;
+
+const RESEARCH_VISION_MIN_LENGTH = 1;
+const RESEARCH_VISION_MAX_LENGTH = 2000;
+
+const RESEARCH_IDENTITY_SUMMARY_MIN_LENGTH = 1;
+const RESEARCH_IDENTITY_SUMMARY_MAX_LENGTH = 500;
+
+const TIME_HORIZON_MIN_LENGTH = 1;
+const TIME_HORIZON_MAX_LENGTH = 100;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ResearchStage Value Object
@@ -95,6 +103,7 @@ export class ResearchStage extends ValueObject<ResearchStageProps> {
    */
   private constructor(props: ResearchStageProps) {
     super(props);
+    Object.freeze(this);
   }
 
   /**
@@ -121,6 +130,14 @@ export class ResearchStage extends ValueObject<ResearchStageProps> {
   /** Serialisation support. Returns the canonical string value. */
   public override toString(): string {
     return this.props.value;
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: ResearchStageValue } {
+    return { value: this.props.value };
   }
 }
 
@@ -159,6 +176,7 @@ interface ResearchFocusProps {
 export class ResearchFocus extends ValueObject<ResearchFocusProps> {
   private constructor(props: ResearchFocusProps) {
     super(props);
+    Object.freeze(this);
   }
 
   /**
@@ -202,6 +220,96 @@ export class ResearchFocus extends ValueObject<ResearchFocusProps> {
   public override toString(): string {
     return this.props.value;
   }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: string } {
+    return { value: this.props.value };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TimeHorizon Value Object
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TimeHorizonProps {
+  readonly value: string;
+}
+
+/**
+ * Purpose:
+ * Immutable descriptor of the time horizon for a research vision or goal.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2; Volume I Chapter 5.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * - Must be a non-empty, trimmed string of 1–100 characters.
+ * - Must not consist solely of whitespace.
+ * - Immutable after creation.
+ *
+ * Future responsibilities:
+ * Express the temporal scope of a research vision or goal.
+ */
+export class TimeHorizon extends ValueObject<TimeHorizonProps> {
+  private constructor(props: TimeHorizonProps) {
+    super(props);
+    Object.freeze(this);
+  }
+
+  /**
+   * Canonical factory method.
+   */
+  public static create(raw: string): Result<TimeHorizon> {
+    if (raw === null || raw === undefined) {
+      return Result.fail(
+        new InvalidTimeHorizonError('value must not be null or undefined.').message,
+      );
+    }
+
+    const trimmed = raw.trim();
+
+    if (trimmed.length < TIME_HORIZON_MIN_LENGTH) {
+      return Result.fail(
+        new InvalidTimeHorizonError('value must not be empty or whitespace.').message,
+      );
+    }
+
+    if (trimmed.length > TIME_HORIZON_MAX_LENGTH) {
+      return Result.fail(
+        new InvalidTimeHorizonError(
+          `value exceeds maximum length of ${TIME_HORIZON_MAX_LENGTH} characters.`,
+        ).message,
+      );
+    }
+
+    return Result.ok(new TimeHorizon({ value: trimmed }));
+  }
+
+  /** The canonical Time Horizon value. */
+  public get value(): string {
+    return this.props.value;
+  }
+
+  /** Serialisation support. */
+  public override toString(): string {
+    return this.props.value;
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   */
+  public toJSON(): { value: string } {
+    return { value: this.props.value };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,6 +345,7 @@ interface CollaborationTypeProps {
 export class CollaborationType extends ValueObject<CollaborationTypeProps> {
   private constructor(props: CollaborationTypeProps) {
     super(props);
+    Object.freeze(this);
   }
 
   /**
@@ -264,9 +373,32 @@ export class CollaborationType extends ValueObject<CollaborationTypeProps> {
     return this.props.value;
   }
 
+  /** Convenience: returns true when type is 'Individual'. */
+  public get isIndividual(): boolean {
+    return this.props.value === 'Individual';
+  }
+
+  /** Convenience: returns true when type is 'Academic'. */
+  public get isAcademic(): boolean {
+    return this.props.value === 'Academic';
+  }
+
+  /** Convenience: returns true when type is 'Industry'. */
+  public get isIndustry(): boolean {
+    return this.props.value === 'Industry';
+  }
+
   /** Serialisation support. */
   public override toString(): string {
     return this.props.value;
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: CollaborationTypeValue } {
+    return { value: this.props.value };
   }
 }
 
@@ -306,6 +438,7 @@ interface ResearchStatusProps {
 export class ResearchStatus extends ValueObject<ResearchStatusProps> {
   private constructor(props: ResearchStatusProps) {
     super(props);
+    Object.freeze(this);
   }
 
   /**
@@ -352,6 +485,14 @@ export class ResearchStatus extends ValueObject<ResearchStatusProps> {
   public override toString(): string {
     return this.props.value;
   }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: ResearchStatusValue } {
+    return { value: this.props.value };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -389,6 +530,7 @@ interface ConfidenceLevelProps {
 export class ConfidenceLevel extends ValueObject<ConfidenceLevelProps> {
   private constructor(props: ConfidenceLevelProps) {
     super(props);
+    Object.freeze(this);
   }
 
   /**
@@ -417,5 +559,192 @@ export class ConfidenceLevel extends ValueObject<ConfidenceLevelProps> {
   /** Serialisation support. */
   public override toString(): string {
     return String(this.props.value);
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: number } {
+    return { value: this.props.value };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ResearchVision Value Object
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ResearchVisionStatementProps {
+  readonly value: string;
+}
+
+/**
+ * Purpose:
+ * Immutable representation of long-term scientific direction.
+ *
+ * Architecture reference:
+ * ADR-103; Volume I Chapter 2 value object table; Volume I Chapter 5
+ * Observation and Interpretation stages; Volume I Chapter 3 semantic layers.
+ *
+ * ADR reference:
+ * ADR-103.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * - Must be a non-empty, trimmed string of 1–2000 characters.
+ * - Must not consist solely of whitespace.
+ * - Research Vision expresses the enduring scientific direction.
+ * - Immutable after creation.
+ *
+ * Future responsibilities:
+ * Represent the researcher's long-term intellectual trajectory independent of
+ * current projects or publications.
+ */
+export class ResearchVisionStatement extends ValueObject<ResearchVisionStatementProps> {
+  private constructor(props: ResearchVisionStatementProps) {
+    super(props);
+    Object.freeze(this);
+  }
+
+  /**
+   * Canonical factory method.
+   *
+   * Normalises whitespace during creation. Returns a Result containing the
+   * ResearchVision on success, or a descriptive error string on failure.
+   */
+  public static create(raw: string): Result<ResearchVisionStatement> {
+    if (raw === null || raw === undefined) {
+      return Result.fail(
+        new InvalidResearchVisionError('value must not be null or undefined.').message,
+      );
+    }
+
+    const trimmed = raw.trim();
+
+    if (trimmed.length < RESEARCH_VISION_MIN_LENGTH) {
+      return Result.fail(
+        new InvalidResearchVisionError('value must not be empty or whitespace.').message,
+      );
+    }
+
+    if (trimmed.length > RESEARCH_VISION_MAX_LENGTH) {
+      return Result.fail(
+        new InvalidResearchVisionError(
+          `value exceeds maximum length of ${RESEARCH_VISION_MAX_LENGTH} characters.`,
+        ).message,
+      );
+    }
+
+    return Result.ok(new ResearchVisionStatement({ value: trimmed }));
+  }
+
+  /** The canonical Research Vision value. */
+  public get value(): string {
+    return this.props.value;
+  }
+
+  /** Serialisation support. */
+  public override toString(): string {
+    return this.props.value;
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: string } {
+    return { value: this.props.value };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ResearchIdentitySummary Value Object
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ResearchIdentitySummaryProps {
+  readonly value: string;
+}
+
+/**
+ * Purpose:
+ * Immutable, concise representation of a researcher's Research Identity.
+ *
+ * Architecture reference:
+ * ADR-101; Volume I Chapter 2 value object table; Volume I Chapter 7 Interface
+ * 1 — Identity Summary Interface.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * - Must be a non-empty, trimmed string of 1–500 characters.
+ * - Must not consist solely of whitespace.
+ * - Summary must provide concise representation of Research Identity.
+ * - Immutable after creation.
+ *
+ * Future responsibilities:
+ * Provide canonical summary output for the Identity Summary Interface without
+ * embedding presentation or formatting logic.
+ */
+export class ResearchIdentitySummary extends ValueObject<ResearchIdentitySummaryProps> {
+  private constructor(props: ResearchIdentitySummaryProps) {
+    super(props);
+    Object.freeze(this);
+  }
+
+  /**
+   * Canonical factory method.
+   *
+   * Normalises whitespace during creation. Returns a Result containing the
+   * ResearchIdentitySummary on success, or a descriptive error string on
+   * failure.
+   */
+  public static create(raw: string): Result<ResearchIdentitySummary> {
+    if (raw === null || raw === undefined) {
+      return Result.fail(
+        new InvalidResearchIdentitySummaryError('value must not be null or undefined.').message,
+      );
+    }
+
+    const trimmed = raw.trim();
+
+    if (trimmed.length < RESEARCH_IDENTITY_SUMMARY_MIN_LENGTH) {
+      return Result.fail(
+        new InvalidResearchIdentitySummaryError('value must not be empty or whitespace.').message,
+      );
+    }
+
+    if (trimmed.length > RESEARCH_IDENTITY_SUMMARY_MAX_LENGTH) {
+      return Result.fail(
+        new InvalidResearchIdentitySummaryError(
+          `value exceeds maximum length of ${RESEARCH_IDENTITY_SUMMARY_MAX_LENGTH} characters.`,
+        ).message,
+      );
+    }
+
+    return Result.ok(new ResearchIdentitySummary({ value: trimmed }));
+  }
+
+  /** The canonical Research Identity Summary value. */
+  public get value(): string {
+    return this.props.value;
+  }
+
+  /** Serialisation support. */
+  public override toString(): string {
+    return this.props.value;
+  }
+
+  /**
+   * Serialisation support for persistence or transport.
+   * Returns a plain object suitable for JSON serialisation.
+   */
+  public toJSON(): { value: string } {
+    return { value: this.props.value };
   }
 }
