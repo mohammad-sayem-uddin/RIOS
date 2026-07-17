@@ -44,6 +44,27 @@ export { ResearchMilestone } from './domain/entities/research-milestone.js';
 export { ResearchGoal } from './domain/entities/research-goal.js';
 export { ResearchContribution } from './domain/entities/research-contribution.js';
 
+// ─── Domain Events ────────────────────────────────────────────────────
+export {
+  IdentityEvent,
+  ResearchAgendaCreated,
+  type ResearchAgendaCreatedPrimitives,
+  ResearchAgendaUpdated,
+  type ResearchAgendaUpdatedPrimitives,
+  ResearchAreaAdded,
+  type ResearchAreaAddedPrimitives,
+  ResearchAreaArchived,
+  type ResearchAreaArchivedPrimitives,
+  ResearchQuestionAdded,
+  type ResearchQuestionAddedPrimitives,
+  GoalAchieved,
+  type GoalAchievedPrimitives,
+  PhilosophyRevised,
+  type PhilosophyRevisedPrimitives,
+  EvolutionUpdated,
+  type EvolutionUpdatedPrimitives,
+} from './domain/events/index.js';
+
 // ─── Aggregate Root ────────────────────────────────────────────────────
 export {
   ResearchIdentity,

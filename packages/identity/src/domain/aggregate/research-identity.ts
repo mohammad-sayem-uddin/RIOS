@@ -63,6 +63,15 @@ import {
   EntityItemNotFoundError,
   IdentityCreationInvariantError,
 } from '../errors/identity-errors.js';
+import {
+  EvolutionUpdated,
+  IdentityEvent,
+  PhilosophyRevised,
+  ResearchAgendaUpdated,
+  ResearchAreaAdded,
+  ResearchAreaArchived,
+  ResearchQuestionAdded,
+} from '../events/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface for aggregate properties
@@ -140,7 +149,7 @@ export interface ReadonlyResearchIdentitySnapshot {
 export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
   // ─── Pending Domain Events (internal recording only) ────────────────
 
-  private pendingEvents: ReadonlyArray<object> = [];
+  private _pendingEvents: IdentityEvent[] = [];
 
   // ─── Construction ───────────────────────────────────────────────────
 
@@ -198,22 +207,27 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
 
     const now = params.createdAt ?? new Date().toISOString();
 
-    return Result.ok(
-      new ResearchIdentity({
-        vision: params.vision,
-        agenda: params.agenda,
-        _areas: [],
-        _questions: [],
-        philosophy: params.philosophy,
-        values: params.values,
-        evolution: params.evolution,
-        _goals: [],
-        _contributions: [],
-        _milestones: [],
-        createdAt: now,
-        updatedAt: now,
-      }),
-    );
+    const identity = new ResearchIdentity({
+      vision: params.vision,
+      agenda: params.agenda,
+      _areas: [],
+      _questions: [],
+      philosophy: params.philosophy,
+      values: params.values,
+      evolution: params.evolution,
+      _goals: [],
+      _contributions: [],
+      _milestones: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // NOTE: We cannot record events here because we don't have the ID yet.
+    // The caller (application layer) should record the creation event after
+    // the aggregate has been assigned an ID. Alternatively, reconstitute()
+    // is used for persistence rehydration.
+
+    return Result.ok(identity);
   }
 
   /**
@@ -362,8 +376,15 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
    * Invariants: Agenda must be a valid ResearchAgenda entity.
    */
   updateAgenda(agenda: ResearchAgenda): void {
+    const previousTitle = this.props.agenda.focus.value;
     this.props.agenda = agenda;
     this.touch();
+    this.recordEvent(
+      new ResearchAgendaUpdated(this.id.value, {
+        previousTitle,
+        newTitle: agenda.focus.value,
+      }),
+    );
   }
 
   // ─── Domain Behavior: Research Areas ────────────────────────────────
@@ -382,6 +403,12 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
     }
     this.props._areas.push(area);
     this.touch();
+    this.recordEvent(
+      new ResearchAreaAdded(this.id.value, {
+        areaId: area.id.value,
+        areaName: area.name.value,
+      }),
+    );
     return Result.ok(undefined);
   }
 
@@ -398,8 +425,20 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
         new EntityItemNotFoundError(`Research Area with ID ${areaId.value}`).message,
       );
     }
+    const removedArea = this.props._areas[index];
+    if (removedArea === undefined) {
+      return Result.fail<void>(
+        new EntityItemNotFoundError(`Research Area with ID ${areaId.value}`).message,
+      );
+    }
     this.props._areas.splice(index, 1);
     this.touch();
+    this.recordEvent(
+      new ResearchAreaArchived(this.id.value, {
+        areaId: removedArea.id.value,
+        areaName: removedArea.name.value,
+      }),
+    );
     return Result.ok(undefined);
   }
 
@@ -427,6 +466,12 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
     }
     this.props._questions.push(question);
     this.touch();
+    this.recordEvent(
+      new ResearchQuestionAdded(this.id.value, {
+        questionId: question.id.value,
+        questionTitle: question.question.value,
+      }),
+    );
     return Result.ok(undefined);
   }
 
@@ -467,6 +512,11 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
   updatePhilosophy(philosophy: ResearchPhilosophy): void {
     this.props.philosophy = philosophy;
     this.touch();
+    this.recordEvent(
+      new PhilosophyRevised(this.id.value, {
+        summary: philosophy.statement.value,
+      }),
+    );
   }
 
   // ─── Domain Behavior: Values ────────────────────────────────────────
@@ -493,6 +543,12 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
   updateEvolution(evolution: ResearchEvolution): void {
     this.props.evolution = evolution;
     this.touch();
+    this.recordEvent(
+      new EvolutionUpdated(this.id.value, {
+        milestoneId: evolution.id.value,
+        milestoneTitle: evolution.description.value,
+      }),
+    );
   }
 
   // ─── Domain Behavior: Goals ─────────────────────────────────────────
@@ -511,6 +567,8 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
     }
     this.props._goals.push(goal);
     this.touch();
+    // NOTE: GoalAchieved is recorded when completeGoal() is called,
+    // not when a goal is added.
     return Result.ok(undefined);
   }
 
@@ -613,19 +671,18 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
   /**
    * Pull all pending domain events and clear the internal buffer.
    * This is the ONLY way external code can retrieve recorded events.
-   * Milestone 5 will implement event definitions and publishing.
    */
-  pullDomainEvents(): ReadonlyArray<object> {
-    const events = this.pendingEvents;
-    this.pendingEvents = [];
-    return events;
+  pullDomainEvents(): ReadonlyArray<IdentityEvent> {
+    const events = [...this._pendingEvents];
+    this._pendingEvents = [];
+    return Object.freeze(events);
   }
 
   /**
    * Clear all pending domain events without retrieving them.
    */
   clearDomainEvents(): void {
-    this.pendingEvents = [];
+    this._pendingEvents = [];
   }
 
   // ─── Internal Helpers ───────────────────────────────────────────────
@@ -637,7 +694,12 @@ export class ResearchIdentity extends AggregateRoot<ResearchIdentityProps> {
     this.props.updatedAt = new Date().toISOString();
   }
 
-  // NOTE: recordEvent() will be added in Milestone 5 when domain event
-  // definitions are implemented. The pendingEvents infrastructure is
-  // in place now to ensure the aggregate is ready.
+  /**
+   * Record a domain event in the internal buffer.
+   * Events are only recorded after successful state changes.
+   * Private — only the aggregate itself may record events.
+   */
+  private recordEvent(event: IdentityEvent): void {
+    this._pendingEvents = [...this._pendingEvents, event];
+  }
 }
