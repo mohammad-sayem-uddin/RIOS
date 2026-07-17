@@ -6,6 +6,8 @@
       "@rios/shared/*": ["./packages/shared/src/*"],
       "@rios/domain": ["./packages/domain/src"],
       "@rios/domain/*": ["./packages/domain/src/*"],
+      "@rios/identity": ["./packages/identity/src"],
+      "@rios/identity/*": ["./packages/identity/src/*"],
       "@rios/application": ["./packages/application/src"],
       "@rios/application/*": ["./packages/application/src/*"],
       "@rios/infrastructure": ["./packages/infrastructure/src"],

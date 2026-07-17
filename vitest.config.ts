@@ -1,5 +1,6 @@
-import { defineConfig } from 'vitest/config';
 import path from 'node:path';
+
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -35,6 +36,7 @@ export default defineConfig({
     alias: {
       '@rios/shared': path.resolve(__dirname, 'packages/shared/src'),
       '@rios/domain': path.resolve(__dirname, 'packages/domain/src'),
+      '@rios/identity': path.resolve(__dirname, 'packages/identity/src'),
       '@rios/application': path.resolve(__dirname, 'packages/application/src'),
       '@rios/infrastructure': path.resolve(__dirname, 'packages/infrastructure/src'),
     },
