@@ -32,6 +32,7 @@
 import { Result, UniqueId } from '@rios/shared';
 
 import { ResearchIdentity } from '../aggregate/research-identity.js';
+import type { Specification } from '../specifications/specification.js';
 
 /**
  * ResearchIdentityRepository — the domain contract for persisting and
@@ -102,4 +103,20 @@ export interface ResearchIdentityRepository {
    *          if no aggregate exists with the given id.
    */
   delete(id: UniqueId): Promise<Result<void>>;
+
+  /**
+   * Find all ResearchIdentity aggregates that satisfy the given specification.
+   *
+   * This is the primary specification-based query operation. Instead of
+   * exposing many narrow query methods (findByStage, findByArea, findByGoal,
+   * etc.), callers compose Specifications to express arbitrary query intent.
+   *
+   * Specifications are pure domain concepts — they encapsulate business rules,
+   * not database queries. The infrastructure implementation is responsible
+   * for translating the specification into the appropriate persistence query.
+   *
+   * @param specification - The specification that aggregates must satisfy.
+   * @returns Result<ResearchIdentity[]> — the matching aggregates, or failure.
+   */
+  findMatching(specification: Specification<ResearchIdentity>): Promise<Result<ResearchIdentity[]>>;
 }

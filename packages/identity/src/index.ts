@@ -101,3 +101,12 @@ export {
 
 // ─── Domain Repositories ──────────────────────────────────────────────
 export type { ResearchIdentityRepository } from './domain/repositories/index.js';
+
+// ─── Domain Specifications ───────────────────────────────────────────
+export type { Specification } from './domain/specifications/index.js';
+export {
+  AndSpecification,
+  OrSpecification,
+  NotSpecification,
+  ResearchIdentitySpecification,
+} from './domain/specifications/index.js';
