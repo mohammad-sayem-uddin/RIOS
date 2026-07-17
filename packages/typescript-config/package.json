@@ -1,0 +1,9 @@
+{
+  "name": "@rios/typescript-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RIOS Shared TypeScript Configuration",
+  "files": [
+    "base.json"
+  ]
+}

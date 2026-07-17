@@ -1,0 +1,79 @@
+# RIOS Test Environment Infrastructure
+# Lightweight versions for CI and testing
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: rios-postgres-test
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: rios_test
+      POSTGRES_PASSWORD: rios_test_password
+      POSTGRES_DB: rios_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rios_test -d rios_test']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - rios-test-network
+
+  eventstore-test:
+    image: eventstore/eventstore:24.10.0-jammy
+    container_name: rios-eventstore-test
+    ports:
+      - '2114:2113'
+    environment:
+      EVENTSTORE_INSECURE: 'true'
+      EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: 'true'
+      EVENTSTORE_CLUSTER_SIZE: '1'
+      EVENTSTORE_START_STANDARD_PROJECTIONS: 'true'
+    tmpfs:
+      - /var/lib/eventstore
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:2113/health/live || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    networks:
+      - rios-test-network
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: rios-redis-test
+    ports:
+      - '6380:6379'
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - rios-test-network
+
+  qdrant-test:
+    image: qdrant/qdrant:v1.12.4
+    container_name: rios-qdrant-test
+    ports:
+      - '6335:6333'
+    tmpfs:
+      - /qdrant/storage
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:6333/healthz || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - rios-test-network
+
+networks:
+  rios-test-network:
+    driver: bridge

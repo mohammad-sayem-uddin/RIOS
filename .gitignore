@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Coverage
+coverage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python (legacy tooling)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE (VS Code settings are shared via .vscode/)
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# Archives (generated)
+archive/*.zip
+
+# ESLint cache
+.eslintcache
+
+# Playwright
+test-results/
+playwright-report/
+
+# pnpm
+pnpm-debug.log*
+
+# Docker
+*.pid
+
+# Misc
+*.local

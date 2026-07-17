@@ -1,0 +1,32 @@
+{
+  "name": "@rios/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RIOS Infrastructure Layer — repositories, event store, external services, database clients",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo",
+    "dev": "tsc -b --watch",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rios/application": "workspace:*",
+    "@rios/domain": "workspace:*",
+    "@rios/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@rios/typescript-config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

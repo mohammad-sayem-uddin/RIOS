@@ -1,0 +1,59 @@
+{
+  "name": "rios",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Research Identity Operating System (RIOS)",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "turbo run build",
+    "build:packages": "turbo run build --filter='./packages/*'",
+    "test": "turbo run test",
+    "test:unit": "turbo run test --filter='!**/e2e/**'",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "lint:root": "eslint --cache .",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "clean:dist": "turbo run clean",
+    "dev": "turbo run dev",
+    "db:migrate": "turbo run migrate",
+    "db:seed": "turbo run seed",
+    "quality:gate": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
+    "prepare": "husky",
+    "postinstall": "husky || true"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-perfectionist": "^3.0.0",
+    "eslint-plugin-unused-imports": "^4.0.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.3.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0",
+    "@vitest/coverage-v8": "^3.2.0",
+    "@vitest/ui": "^3.2.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --cache",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml,css,html}": [
+      "prettier --write"
+    ]
+  }
+}

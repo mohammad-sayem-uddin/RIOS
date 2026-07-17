@@ -1,0 +1,28 @@
+{
+  "name": "@rios/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RIOS API — NestJS REST/GraphQL application",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo",
+    "dev": "tsc -b --watch",
+    "lint": "eslint src/",
+    "start": "node dist/main.js",
+    "start:dev": "tsx watch src/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rios/application": "workspace:*",
+    "@rios/domain": "workspace:*",
+    "@rios/infrastructure": "workspace:*",
+    "@rios/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@rios/typescript-config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

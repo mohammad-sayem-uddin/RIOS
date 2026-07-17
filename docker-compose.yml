@@ -1,0 +1,95 @@
+# RIOS Local Development Infrastructure
+# PostgreSQL, EventStoreDB, Redis, Qdrant
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rios-postgres
+    restart: unless-stopped
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rios_password}
+      POSTGRES_DB: ${POSTGRES_DB:-rios}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-rios} -d ${POSTGRES_DB:-rios}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - rios-network
+
+  eventstore:
+    image: eventstore/eventstore:24.10.0-jammy
+    container_name: rios-eventstore
+    restart: unless-stopped
+    ports:
+      - '${EVENTSTORE_HTTP_PORT:-2113}:2113'
+      - '${EVENTSTORE_TCP_PORT:-1113}:1113'
+    environment:
+      EVENTSTORE_INSECURE: 'true'
+      EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: 'true'
+      EVENTSTORE_CLUSTER_SIZE: '1'
+      EVENTSTORE_START_STANDARD_PROJECTIONS: 'true'
+    volumes:
+      - eventstore_data:/var/lib/eventstore
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:2113/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - rios-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rios-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rios-network
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: rios-qdrant
+    restart: unless-stopped
+    ports:
+      - '${QDRANT_HTTP_PORT:-6333}:6333'
+      - '${QDRANT_GRPC_PORT:-6334}:6334'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:6333/healthz || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - rios-network
+
+volumes:
+  postgres_data:
+    driver: local
+  eventstore_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  rios-network:
+    driver: bridge

@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@rios/shared": ["./packages/shared/src"],
+      "@rios/shared/*": ["./packages/shared/src/*"],
+      "@rios/domain": ["./packages/domain/src"],
+      "@rios/domain/*": ["./packages/domain/src/*"],
+      "@rios/application": ["./packages/application/src"],
+      "@rios/application/*": ["./packages/application/src/*"],
+      "@rios/infrastructure": ["./packages/infrastructure/src"],
+      "@rios/infrastructure/*": ["./packages/infrastructure/src/*"],
+      "@rios/lib-cqrs": ["./libs/cqrs/src"],
+      "@rios/lib-cqrs/*": ["./libs/cqrs/src/*"],
+      "@rios/lib-event-sourcing": ["./libs/event-sourcing/src"],
+      "@rios/lib-event-sourcing/*": ["./libs/event-sourcing/src/*"],
+      "@rios/lib-testing": ["./libs/testing/src"],
+      "@rios/lib-testing/*": ["./libs/testing/src/*"],
+      "@rios/lib-config": ["./libs/config/src"],
+      "@rios/lib-config/*": ["./libs/config/src/*"],
+      "@rios/ui": ["./packages/ui/src"],
+      "@rios/ui/*": ["./packages/ui/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "coverage", "archive", "tools"]
+}

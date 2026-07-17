@@ -1,0 +1,10 @@
+dist/
+coverage/
+node_modules/
+.turbo/
+*.png
+*.jpg
+*.svg
+*.ico
+pnpm-lock.yaml
+archive/

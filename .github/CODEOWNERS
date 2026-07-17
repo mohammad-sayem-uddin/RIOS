@@ -1,0 +1,63 @@
+# RIOS CODEOWNERS — Domain Ownership Enforcement
+# Maps to Domain Ownership Matrix (DOM)
+
+# Architecture (governance board)
+docs/architecture/                     @rios/architecture-board
+docs/adr/                              @rios/architecture-board
+
+# Identity Domain
+packages/domain/src/identity/          @rios/identity-team
+packages/application/src/identity/     @rios/identity-team
+apps/api/src/modules/identity/         @rios/identity-team
+
+# Knowledge Domain
+packages/domain/src/knowledge/         @rios/knowledge-team
+packages/application/src/knowledge/    @rios/knowledge-team
+apps/api/src/modules/knowledge/        @rios/knowledge-team
+
+# Narrative Domain
+packages/domain/src/narrative/         @rios/narrative-team
+packages/application/src/narrative/    @rios/narrative-team
+apps/api/src/modules/narrative/        @rios/narrative-team
+
+# Publication Domain
+packages/domain/src/publication/       @rios/publication-team
+packages/application/src/publication/  @rios/publication-team
+apps/api/src/modules/publication/      @rios/publication-team
+
+# Visualization Domain
+packages/domain/src/visualization/     @rios/visualization-team
+packages/application/src/visualization/ @rios/visualization-team
+apps/api/src/modules/visualization/    @rios/visualization-team
+
+# Motion Domain
+packages/domain/src/motion/            @rios/motion-team
+packages/application/src/motion/       @rios/motion-team
+apps/api/src/modules/motion/           @rios/motion-team
+
+# Engineering Domain
+packages/domain/src/engineering/       @rios/engineering-team
+packages/application/src/engineering/  @rios/engineering-team
+apps/api/src/modules/engineering/      @rios/engineering-team
+
+# Evolution Domain
+packages/domain/src/evolution/         @rios/evolution-team
+packages/application/src/evolution/    @rios/evolution-team
+apps/api/src/modules/evolution/        @rios/evolution-team
+
+# Infrastructure (platform team)
+packages/infrastructure/               @rios/platform-team
+infrastructure/                        @rios/platform-team
+
+# Shared / Libs (platform team)
+packages/shared/                       @rios/platform-team
+libs/                                  @rios/platform-team
+
+# CI/CD (platform team)
+.github/                               @rios/platform-team
+scripts/                               @rios/platform-team
+
+# Root configuration (platform team)
+package.json                           @rios/platform-team
+tsconfig.json                          @rios/platform-team
+turbo.json                             @rios/platform-team
