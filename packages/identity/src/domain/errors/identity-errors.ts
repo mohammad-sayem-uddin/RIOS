@@ -758,6 +758,205 @@ export class InvalidEntityReferenceError extends IdentityInvariantViolationError
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Concrete Policy Violation Errors
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Purpose:
+ * Raised when the Research Identity aggregate fails a completeness check.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.8; Volume I Chapter 9 foundational constraints;
+ * IA-I-001 through IA-I-006.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * All mandatory components (Vision, Agenda, Philosophy, Values, Evolution)
+ * must be present for a Research Identity to be considered complete.
+ */
+export class IdentityCompletenessViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(`Identity completeness violation: ${detail}`, 'IDENTITY_COMPLETENESS_VIOLATION', 400);
+    this.name = 'IdentityCompletenessViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when the Research Agenda fails consistency checks with the
+ * aggregate or value objects.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.1; IA-I-001; FC-003; Volume I Chapter 9.
+ *
+ * ADR reference:
+ * ADR-101, ADR-102.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Exactly one primary Research Agenda. Agenda must be problem-oriented and
+ * technology-independent.
+ */
+export class ResearchAgendaConsistencyViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(
+      `Research Agenda consistency violation: ${detail}`,
+      'IDENTITY_RESEARCH_AGENDA_CONSISTENCY_VIOLATION',
+      400,
+    );
+    this.name = 'ResearchAgendaConsistencyViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Area fails eligibility checks for addition
+ * to the aggregate.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.4; IA-I-002; SC-004; ADR-106.
+ *
+ * ADR reference:
+ * ADR-101, ADR-106.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Research Areas must represent scientific domains (not implementation
+ * technologies). Each area must contribute to the Research Agenda.
+ */
+export class ResearchAreaEligibilityViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(
+      `Research Area eligibility violation: ${detail}`,
+      'IDENTITY_RESEARCH_AREA_ELIGIBILITY_VIOLATION',
+      400,
+    );
+    this.name = 'ResearchAreaEligibilityViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Goal fails completion or validity checks.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.7; FC-007; SC-005.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Goals must translate Vision into achievable objectives.
+ * Goals may evolve; Vision should remain comparatively stable.
+ * Completed goals must preserve historical record.
+ */
+export class ResearchGoalCompletionViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(
+      `Research Goal completion violation: ${detail}`,
+      'IDENTITY_RESEARCH_GOAL_COMPLETION_VIOLATION',
+      400,
+    );
+    this.name = 'ResearchGoalCompletionViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when a Research Contribution fails acceptance criteria.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.9; Volume I Chapter 3 section 3.5;
+ * SC-005; FC-005.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Contributions represent original knowledge produced by the researcher.
+ * Contributions must be verified before being considered part of
+ * Identity. Contributions generate impact.
+ */
+export class ContributionAcceptanceViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(
+      `Contribution acceptance violation: ${detail}`,
+      'IDENTITY_CONTRIBUTION_ACCEPTANCE_VIOLATION',
+      400,
+    );
+    this.name = 'ContributionAcceptanceViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when the Research Evolution fails continuity or integrity checks.
+ *
+ * Architecture reference:
+ * Volume I Chapter 4; IA-I-006; EC-001 through EC-003; FC-002.
+ *
+ * ADR reference:
+ * ADR-101.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Evolution must preserve historical continuity. No historical identity
+ * shall be deleted. Evolution must be additive and traceable.
+ */
+export class ResearchEvolutionViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(`Research Evolution violation: ${detail}`, 'IDENTITY_RESEARCH_EVOLUTION_VIOLATION', 400);
+    this.name = 'ResearchEvolutionViolationError';
+  }
+}
+
+/**
+ * Purpose:
+ * Raised when the Research Vision fails consistency checks with the
+ * aggregate or other entities.
+ *
+ * Architecture reference:
+ * Volume I Chapter 2 section 2.5.6; IA-I-003; IA-I-007; FC-006.
+ *
+ * ADR reference:
+ * ADR-101, ADR-103.
+ *
+ * Ownership:
+ * Identity Domain.
+ *
+ * Invariants:
+ * Vision must express enduring scientific direction. Vision must be
+ * representation-independent. Goals must trace to Vision.
+ */
+export class ResearchVisionConsistencyViolationError extends IdentityInvariantViolationError {
+  constructor(detail: string) {
+    super(
+      `Research Vision consistency violation: ${detail}`,
+      'IDENTITY_RESEARCH_VISION_CONSISTENCY_VIOLATION',
+      400,
+    );
+    this.name = 'ResearchVisionConsistencyViolationError';
+  }
+}
+
 /**
  * All identity domain errors re-exported for convenient access.
  */
@@ -770,4 +969,11 @@ export const IdentityErrors = {
   IdentityCreationInvariantError,
   AggregateInvariantViolationError,
   InvalidEntityReferenceError,
+  IdentityCompletenessViolationError,
+  ResearchAgendaConsistencyViolationError,
+  ResearchAreaEligibilityViolationError,
+  ResearchGoalCompletionViolationError,
+  ContributionAcceptanceViolationError,
+  ResearchEvolutionViolationError,
+  ResearchVisionConsistencyViolationError,
 } as const;

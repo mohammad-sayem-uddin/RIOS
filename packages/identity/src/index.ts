@@ -18,6 +18,13 @@ export {
   IdentityCreationInvariantError,
   AggregateInvariantViolationError,
   InvalidEntityReferenceError,
+  IdentityCompletenessViolationError,
+  ResearchAgendaConsistencyViolationError,
+  ResearchAreaEligibilityViolationError,
+  ResearchGoalCompletionViolationError,
+  ContributionAcceptanceViolationError,
+  ResearchEvolutionViolationError,
+  ResearchVisionConsistencyViolationError,
 } from './domain/errors/identity-errors.js';
 
 // ─── Value Objects ─────────────────────────────────────────────────────
@@ -70,3 +77,14 @@ export {
   ResearchIdentity,
   type ReadonlyResearchIdentitySnapshot,
 } from './domain/aggregate/research-identity.js';
+
+// ─── Domain Policies ─────────────────────────────────────────────────
+export {
+  IdentityCompletenessPolicy,
+  ResearchAgendaConsistencyPolicy,
+  ResearchAreaEligibilityPolicy,
+  ResearchGoalCompletionPolicy,
+  ContributionAcceptancePolicy,
+  ResearchEvolutionPolicy,
+  ResearchVisionConsistencyPolicy,
+} from './domain/policies/index.js';
