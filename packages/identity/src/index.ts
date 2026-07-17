@@ -88,3 +88,13 @@ export {
   ResearchEvolutionPolicy,
   ResearchVisionConsistencyPolicy,
 } from './domain/policies/index.js';
+
+// ─── Domain Factories ─────────────────────────────────────────────────
+export {
+  ResearchIdentityFactory,
+  ResearchAgendaFactory,
+  ResearchAreaFactory,
+  ResearchGoalFactory,
+  ResearchContributionFactory,
+  ResearchEvolutionFactory,
+} from './domain/factories/index.js';
