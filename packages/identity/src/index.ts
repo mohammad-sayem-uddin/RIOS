@@ -98,3 +98,6 @@ export {
   ResearchContributionFactory,
   ResearchEvolutionFactory,
 } from './domain/factories/index.js';
+
+// ─── Domain Repositories ──────────────────────────────────────────────
+export type { ResearchIdentityRepository } from './domain/repositories/index.js';
