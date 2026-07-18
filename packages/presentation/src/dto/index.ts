@@ -25,3 +25,5 @@ export type {
   ResearchIdentityIdResponseDto,
   ResearchIdentityResponseDto,
 } from './research-identity-dtos.js';
+
+export * from './research-profile-dtos.js';

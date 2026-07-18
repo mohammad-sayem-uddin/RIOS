@@ -1,10 +1,9 @@
 /**
- * Purpose:
- * Aggregate Root for the Identity Domain.
- * This is the single consistency boundary for the entire Identity Domain.
- * Every command, query, repository, and service interacts with the Identity
- * Domain ONLY through this Aggregate Root.
+ * @deprecated Legacy Sprint 1–4 ResearchIdentity domain aggregate.
+ * Primary research profile aggregate root is now `ResearchProfile` in `@rios/domain`.
  *
+ * Purpose:
+ * Aggregate Root for the Legacy Research Identity Domain.
  * Architecture reference:
  * Domain Model Specification Layers 7-9; Volume I Chapter 8 structural integrity;
  * Volume I Chapter 9 foundational, structural, relationship, and evolution constraints.

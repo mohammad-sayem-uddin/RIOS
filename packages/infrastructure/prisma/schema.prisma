@@ -1,5 +1,5 @@
-// Sprint 6 — Production Persistence Platform Prisma Schema
-// Architecture Reference: Volume I – Persistence Infrastructure & PostgreSQL Relational Schema
+// Sprint 7 — Production Persistence Platform Prisma Schema
+// Architecture Reference: Research Identity Domain & PostgreSQL Relational Schema
 
 datasource db {
   provider = "postgresql"
@@ -32,6 +32,7 @@ model User {
   refreshTokens     RefreshToken[]
   auditLogs         AuditLog[]
   researchIdentities ResearchIdentity[]
+  researchProfiles  ResearchProfile[]
 
   @@index([email])
   @@index([status])
@@ -158,4 +159,131 @@ model ResearchIdentity {
 
   @@index([userId])
   @@map("research_identities")
+}
+
+// ─── Sprint 7 — Research Identity Domain Models ────────────────────────────────
+
+model ResearchProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(255)
+  headline  String?  @db.VarChar(255)
+  biography String?  @db.Text
+  summary   String?  @db.Text
+  statement String?  @db.Text
+  mission   String?  @db.Text
+  vision    String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  education        Education[]
+  experience       ProfessionalExperience[]
+  interests        ResearchInterest[]
+  skills           Skill[]
+  externalProfiles ExternalProfile[]
+  portfolioAssets  PortfolioAsset[]
+
+  @@index([userId])
+  @@map("research_profiles")
+}
+
+model Education {
+  id           String    @id @default(uuid()) @db.Uuid
+  profileId    String    @map("profile_id") @db.Uuid
+  institution  String    @db.VarChar(255)
+  degree       String    @db.VarChar(255)
+  fieldOfStudy String    @map("field_of_study") @db.VarChar(255)
+  startDate    DateTime  @map("start_date") @db.Timestamptz
+  endDate      DateTime? @map("end_date") @db.Timestamptz
+  isCurrent    Boolean   @default(false) @map("is_current")
+  grade        String?   @db.VarChar(100)
+  description  String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("educations")
+}
+
+model ProfessionalExperience {
+  id            String    @id @default(uuid()) @db.Uuid
+  profileId     String    @map("profile_id") @db.Uuid
+  positionTitle String    @map("position_title") @db.VarChar(255)
+  organization  String    @db.VarChar(255)
+  location      String?   @db.VarChar(255)
+  startDate     DateTime  @map("start_date") @db.Timestamptz
+  endDate       DateTime? @map("end_date") @db.Timestamptz
+  isCurrent     Boolean   @default(false) @map("is_current")
+  description   String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("professional_experiences")
+}
+
+model ResearchInterest {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  name      String   @db.VarChar(150)
+  category  String?  @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([name])
+  @@map("research_interests")
+}
+
+model Skill {
+  id               String   @id @default(uuid()) @db.Uuid
+  profileId        String   @map("profile_id") @db.Uuid
+  name             String   @db.VarChar(100)
+  category         String   @db.VarChar(100)
+  proficiencyLevel String?  @map("proficiency_level") @db.VarChar(50)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([name])
+  @@map("skills")
+}
+
+model ExternalProfile {
+  id                 String   @id @default(uuid()) @db.Uuid
+  profileId          String   @map("profile_id") @db.Uuid
+  provider           String   @db.VarChar(100)
+  url                String   @db.Text
+  externalIdentifier String?  @map("external_identifier") @db.VarChar(255)
+  isVerified         Boolean  @default(false) @map("is_verified")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("external_profiles")
+}
+
+model PortfolioAsset {
+  id            String   @id @default(uuid()) @db.Uuid
+  profileId     String   @map("profile_id") @db.Uuid
+  title         String   @db.VarChar(255)
+  assetType     String   @map("asset_type") @db.VarChar(100)
+  fileUrl       String   @map("file_url") @db.Text
+  mimeType      String   @map("mime_type") @db.VarChar(100)
+  fileSizeBytes Int      @map("file_size_bytes")
+  uploadedAt    DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("portfolio_assets")
 }

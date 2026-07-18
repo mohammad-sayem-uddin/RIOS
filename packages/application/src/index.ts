@@ -40,3 +40,6 @@ export { DomainEventCoordinator, type DomainEventSource } from './events/index.j
 
 // ─── Identity IAM (Sprint 5) ───────────────────────────────────────────
 export * from './identity/index.js';
+
+// ─── Research Profile Domain (Sprint 7) ────────────────────────────────
+export * from './research-identity/index.js';

@@ -78,6 +78,9 @@ export {
   InMemoryPermissionRepository,
 } from './repositories/identity/in-memory-role-repository.js';
 
+// Research Identity Infrastructure (Sprint 7)
+export * from './research-identity/index.js';
+
 // DI Container & Composition Root
 export { Container, Lifetime } from './di/container.js';
 export { CompositionRoot, createInMemoryPrismaClient } from './di/composition-root.js';

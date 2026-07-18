@@ -14,3 +14,4 @@ export { createCompressionMiddleware } from './compression.middleware.js';
 export { createSecurityHeadersMiddleware } from './security-headers.middleware.js';
 export { createTimeoutMiddleware } from './timeout.middleware.js';
 export { createExceptionMiddleware } from './exception.middleware.js';
+export { createProfileOwnershipMiddleware } from './ownership.middleware.js';

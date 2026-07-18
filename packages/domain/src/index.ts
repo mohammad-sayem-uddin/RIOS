@@ -5,3 +5,4 @@
  */
 
 export * from './identity/index.js';
+export * from './research-identity/index.js';
