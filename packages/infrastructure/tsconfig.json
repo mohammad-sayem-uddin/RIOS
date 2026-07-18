@@ -16,6 +16,7 @@
   "references": [
     { "path": "../shared" },
     { "path": "../domain" },
+    { "path": "../identity" },
     { "path": "../application" }
   ]
 }

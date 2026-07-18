@@ -23,6 +23,7 @@
   "dependencies": {
     "@rios/application": "workspace:*",
     "@rios/domain": "workspace:*",
+    "@rios/identity": "workspace:*",
     "@rios/shared": "workspace:*"
   },
   "devDependencies": {
