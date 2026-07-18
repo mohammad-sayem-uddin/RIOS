@@ -124,7 +124,7 @@ export class ResearchIdentityRepositoryImpl
         include: this.translator.getFullAggregateInclude(),
       });
 
-      if (!record) {
+      if (record === null || record === undefined) {
         return Result.fail(`ResearchIdentity not found: ${id.value}`);
       }
 
@@ -261,7 +261,7 @@ export class ResearchIdentityRepositoryImpl
         where: { id: id.value },
       });
 
-      if (!record) {
+      if (record === null || record === undefined) {
         return Result.fail(`ResearchIdentity not found: ${id.value}`);
       }
 
@@ -303,7 +303,7 @@ export class ResearchIdentityRepositoryImpl
    * Otherwise, use DatabaseProvider's client.
    */
   private resolveClient(context?: TransactionContext): PrismaClientLike {
-    if (context?.handle) {
+    if (context !== undefined && context.handle !== undefined && context.handle !== null) {
       return context.handle as PrismaClientLike;
     }
     return this.databaseProvider.getClient() as PrismaClientLike;

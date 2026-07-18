@@ -35,12 +35,17 @@ export {
 export type { AggregateMapper, RowMapper, SpecificationTranslator } from './mappers/index.js';
 
 // ——— Persistence ———
-export { TransactionIsolationLevel } from './persistence/index.js';
+export {
+  TransactionIsolationLevel,
+  PrismaUnitOfWork,
+  PrismaTransactionContext,
+} from './persistence/index.js';
 export type {
   UnitOfWork,
   TransactionContext,
   TransactionOptions,
   TransactionIsolationLevelType,
+  PrismaClientWithTransaction,
 } from './persistence/index.js';
 
 // ——— Database ———
