@@ -2,6 +2,7 @@
  * OpenAPI 3.0 Document Generator.
  *
  * Programmatically constructs OpenAPI documentation for all RIOS HTTP endpoints.
+ * Architecture Reference: Volume I – Identity / Chapter 7 §87, Chapter 10 §145
  */
 
 export interface OpenApiSpec {
@@ -13,8 +14,10 @@ export interface OpenApiSpec {
   };
   paths: Record<string, unknown>;
   components: {
+    securitySchemes?: Record<string, unknown>;
     schemas: Record<string, unknown>;
   };
+  security?: Array<Record<string, string[]>>;
 }
 
 export class SwaggerGenerator {
@@ -25,7 +28,7 @@ export class SwaggerGenerator {
         title: 'Research Identity Operating System (RIOS) API',
         version: '1.0.0',
         description:
-          'Enterprise REST API for Research Identity management, DDD aggregates, and CQRS operations.',
+          'Enterprise REST API for Research Identity management, Identity & Access Management (IAM), DDD aggregates, and CQRS operations.',
       },
       paths: {
         '/health': {
@@ -55,10 +58,69 @@ export class SwaggerGenerator {
             },
           },
         },
+        '/api/v1/auth/login': {
+          post: {
+            summary: 'Authenticate user and issue tokens',
+            tags: ['Authentication'],
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/LoginRequest' },
+                },
+              },
+            },
+            responses: {
+              '200': { description: 'Authentication successful' },
+              '401': { description: 'Invalid credentials' },
+            },
+          },
+        },
+        '/api/v1/auth/refresh': {
+          post: {
+            summary: 'Rotate refresh token and issue new access token',
+            tags: ['Authentication'],
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/RefreshTokenRequest' },
+                },
+              },
+            },
+            responses: {
+              '200': { description: 'Tokens refreshed' },
+              '401': { description: 'Invalid refresh token' },
+            },
+          },
+        },
+        '/api/v1/auth/logout': {
+          post: {
+            summary: 'Revoke active authentication session',
+            tags: ['Authentication'],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              '200': { description: 'Logout successful' },
+              '401': { description: 'Unauthorized' },
+            },
+          },
+        },
+        '/api/v1/auth/me': {
+          get: {
+            summary: 'Retrieve current authenticated user context',
+            tags: ['Authentication'],
+            security: [{ bearerAuth: [] }],
+            responses: {
+              '200': { description: 'Current user details' },
+              '401': { description: 'Unauthorized' },
+            },
+          },
+        },
         '/api/v1/research-identities': {
           post: {
             summary: 'Establish a new Research Identity',
             tags: ['Research Identity'],
+            security: [{ bearerAuth: [] }],
             requestBody: {
               required: true,
               content: {
@@ -75,6 +137,7 @@ export class SwaggerGenerator {
           get: {
             summary: 'Find Research Identities by filters',
             tags: ['Research Identity'],
+            security: [{ bearerAuth: [] }],
             parameters: [
               { name: 'stage', in: 'query', schema: { type: 'string' } },
               { name: 'focus', in: 'query', schema: { type: 'string' } },
@@ -88,6 +151,7 @@ export class SwaggerGenerator {
           get: {
             summary: 'Search Research Identities by text',
             tags: ['Research Identity'],
+            security: [{ bearerAuth: [] }],
             parameters: [
               { name: 'q', in: 'query', required: true, schema: { type: 'string' } },
               { name: 'limit', in: 'query', schema: { type: 'integer' } },
@@ -99,6 +163,7 @@ export class SwaggerGenerator {
           get: {
             summary: 'Get Research Identity by ID',
             tags: ['Research Identity'],
+            security: [{ bearerAuth: [] }],
             parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
             responses: {
               '200': { description: 'Research Identity details' },
@@ -106,25 +171,32 @@ export class SwaggerGenerator {
             },
           },
         },
-        '/api/v1/research-identities/{id}/vision': {
-          put: {
-            summary: 'Refine Research Vision',
-            tags: ['Research Identity'],
-            parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-            requestBody: {
-              required: true,
-              content: {
-                'application/json': {
-                  schema: { $ref: '#/components/schemas/UpdateResearchVisionRequest' },
-                },
-              },
-            },
-            responses: { '200': { description: 'Vision updated' } },
-          },
-        },
       },
       components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'Provide JWT Access Token in standard Bearer format',
+          },
+        },
         schemas: {
+          LoginRequest: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string' },
+            },
+          },
+          RefreshTokenRequest: {
+            type: 'object',
+            required: ['refreshToken'],
+            properties: {
+              refreshToken: { type: 'string' },
+            },
+          },
           CreateResearchIdentityRequest: {
             type: 'object',
             required: ['primaryFocus', 'stage', 'visionStatement', 'timeHorizon'],
@@ -135,14 +207,6 @@ export class SwaggerGenerator {
               timeHorizon: { type: 'string' },
               targetAudience: { type: 'array', items: { type: 'string' } },
               coreThemes: { type: 'array', items: { type: 'string' } },
-            },
-          },
-          UpdateResearchVisionRequest: {
-            type: 'object',
-            required: ['visionStatement', 'timeHorizon'],
-            properties: {
-              visionStatement: { type: 'string' },
-              timeHorizon: { type: 'string' },
             },
           },
         },

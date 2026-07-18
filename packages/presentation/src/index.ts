@@ -1,97 +1,56 @@
 /**
- * @rios/presentation — Presentation Layer.
+ * @rios/presentation
  *
- * Exposes the Application Layer through an HTTP REST API adapter.
- * Preserves Clean Architecture dependency rules: Presentation depends only on
- * Application, Domain/Identity, Infrastructure (Composition Root), and Shared.
+ * Presentation Layer — HTTP API pipeline, controllers, middleware, request context, DTOs, Swagger.
  */
 
-// ——— Bootstrap ———
-export {
-  PresentationHttpServer,
-  bootstrapPresentationServer,
-  type BootstrapPresentationOptions,
-} from './bootstrap/index.js';
+// Configuration
+export type { PresentationConfig } from './configuration/presentation-config.js';
+export { DEFAULT_PRESENTATION_CONFIG } from './configuration/presentation-config.js';
+export { PresentationConfigurationLoader } from './configuration/presentation-config-loader.js';
 
-// ——— Configuration ———
-export {
-  PresentationConfigurationLoader,
-  DEFAULT_PRESENTATION_CONFIG,
-  type PresentationConfig,
-} from './configuration/index.js';
+// Common & Context
+export type { RequestContext } from './common/request-context.js';
+export { createRequestContext } from './common/request-context.js';
+export type { SecurityContext } from './common/security-context.js';
+export { createSecurityContext } from './common/security-context.js';
+import './common/express-types.js';
 
-// ——— Controllers ———
-export { ResearchIdentityController, HealthController } from './controllers/index.js';
-
-// ——— DTOs ———
+// DTOs & Responders
+export { ApiResponseFactory } from './dto/api-response.dto.js';
+export type { ApiResponseDto } from './dto/api-response.dto.js';
 export type {
-  ApiErrorDto,
-  ApiMetaDto,
-  ApiResponseDto,
-  ComponentHealthDto,
-  HealthResponseDto,
-  CreateResearchIdentityRequestDto,
-  UpdateResearchVisionRequestDto,
-  AddResearchAreaRequestDto,
-  RemoveResearchAreaRequestDto,
-  AddResearchQuestionRequestDto,
-  AddResearchGoalRequestDto,
-  RemoveResearchGoalRequestDto,
-  RecordContributionRequestDto,
-  UpdateResearchAgendaRequestDto,
-  SetResearchPhilosophyRequestDto,
-  ReviseResearchPhilosophyRequestDto,
-  RecordEvolutionRequestDto,
-  FindResearchIdentitiesQueryDto,
-  SearchResearchIdentityQueryDto,
-  ResearchIdentityIdResponseDto,
-  ResearchIdentityResponseDto,
-} from './dto/index.js';
-export { ApiResponseFactory } from './dto/index.js';
+  LoginRequestDto,
+  LoginResponseDto,
+  RefreshTokenRequestDto,
+  RefreshTokenResponseDto,
+  LogoutRequestDto,
+  CurrentUserResponseDto,
+} from './dto/auth-dtos.js';
+export { ResultHttpMapper } from './responders/result-http-mapper.js';
 
-// ——— Middleware ———
-export {
-  createRequestIdMiddleware,
-  createCorrelationIdMiddleware,
-  createRequestContextMiddleware,
-  createLoggingMiddleware,
-  createBodyParserMiddleware,
-  createCompressionMiddleware,
-  createSecurityHeadersMiddleware,
-  createTimeoutMiddleware,
-  createExceptionMiddleware,
-  REQUEST_ID_HEADER,
-  CORRELATION_ID_HEADER,
-} from './middleware/index.js';
+// Controllers (Sprint 1-4 & Sprint 5)
+export { ResearchIdentityController } from './controllers/research-identity.controller.js';
+export { HealthController } from './health/health.controller.js';
+export { AuthenticationController } from './authentication/authentication.controller.js';
 
-// ——— Mappers ———
-export { RequestMapper } from './mappers/index.js';
+// Middleware
+export { createRequestIdMiddleware } from './middleware/request-id.middleware.js';
+export { createCorrelationIdMiddleware } from './middleware/correlation-id.middleware.js';
+export { createSecurityHeadersMiddleware } from './middleware/security-headers.middleware.js';
+export { createRequestContextMiddleware } from './middleware/request-context.middleware.js';
+export { createLoggingMiddleware } from './middleware/logging.middleware.js';
+export { createExceptionMiddleware } from './middleware/exception.middleware.js';
+export { createAuthenticationMiddleware } from './middleware/authentication.middleware.js';
+export { requireRole, requirePermission } from './authorization/authorization.middleware.js';
 
-// ——— Responders ———
-export { ResultHttpMapper } from './responders/index.js';
+// Routes
+export { ApiRouter } from './routes/api-router.js';
+export { createAuthenticationRouter } from './authentication/authentication.routes.js';
 
-// ——— Routes ———
-export { ApiRouter } from './routes/index.js';
+// Bootstrap & Server
+export { bootstrapPresentationServer } from './bootstrap/bootstrap-application.js';
+export { PresentationHttpServer } from './bootstrap/presentation-http-server.js';
 
-// ——— Swagger ———
-export { SwaggerGenerator, type OpenApiSpec } from './swagger/index.js';
-
-// ——— Validation ———
-export {
-  SchemaValidator,
-  ValidationException,
-  createValidationMiddleware,
-} from './validation/index.js';
-export type {
-  ValidationErrorDetail,
-  ValidationResult,
-  SchemaRules,
-  FieldRule,
-} from './validation/index.js';
-
-// ——— Versioning ———
-export { ApiVersionManager } from './versioning/index.js';
-
-// ——— Common ———
-export type { RequestContext } from './common/index.js';
-export { createRequestContext } from './common/index.js';
+// Swagger & Versioning
+export { SwaggerGenerator } from './swagger/swagger.generator.js';

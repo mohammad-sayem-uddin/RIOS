@@ -1,113 +1,87 @@
 /**
- * @rios/infrastructure — Infrastructure Layer.
+ * @rios/infrastructure
  *
- * This package provides infrastructure contracts and abstractions
- * for the Research Identity Operating System (RIOS).
- *
- * Architecture:
- * Infrastructure depends on Application, Identity, and Shared.
- * Never the reverse.
+ * Infrastructure Layer — persistence implementations, ORM mapping, DI container, lifecycle, security.
  */
 
-// ——— Contracts ———
-export type { InfrastructureRepository, PersistenceHealthStatus } from './contracts/index.js';
+// Configuration
+export type { AppConfig } from './configuration/app-config.js';
+export { EnvConfigurationLoader } from './configuration/env-configuration-loader.js';
 
-// ——— Errors ———
-export {
-  InfrastructureErrorMapper,
-  InfrastructureErrorCode,
-  type InfrastructureErrorCodeType,
-} from './errors/index.js';
-
-// ——— Mappers ———
-export type { AggregateMapper, RowMapper, SpecificationTranslator } from './mappers/index.js';
-
-// ——— Persistence ———
-export {
-  TransactionIsolationLevel,
-  PrismaUnitOfWork,
-  PrismaTransactionContext,
-} from './persistence/index.js';
-export type {
-  UnitOfWork,
-  TransactionContext,
-  TransactionOptions,
-  TransactionIsolationLevelType,
-  PrismaClientWithTransaction,
-} from './persistence/index.js';
-
-// ——— Database ———
-export { DatabaseConnectionStatus, PrismaDatabaseProvider } from './database/index.js';
+// Database & Health
+export { PrismaDatabaseProvider } from './database/prisma-database-provider.js';
 export type {
   DatabaseProvider,
   DatabaseConnectionStatusType,
-  PrismaClientInterface,
-} from './database/index.js';
+} from './database/database-provider.js';
+export { DatabaseConnectionStatus } from './database/database-provider.js';
+export { InfrastructureHealthCheckService } from './health/health-check-service.js';
 
-// ——— Events ———
-export { OutboxStatus, OutboxEventMapper, PrismaOutboxRepositoryImpl } from './events/index.js';
-export type {
-  EventPublisher,
-  OutboxStore,
-  OutboxEntry,
-  OutboxRecord,
-  OutboxStatusType,
-  OutboxRepository,
-} from './events/index.js';
+// Logging
+export { StructuredLogger, DefaultLoggerFactory } from './logging/structured-logger.js';
+export type { Logger, LoggerFactory, LogLevelType } from './logging/logger.js';
+export { LogLevel } from './logging/logger.js';
+export {
+  StructuredAuditLogger,
+  type IAuditLogger,
+  type AuditEventData,
+} from './logging/structured-audit-logger.js';
 
-// ——— Configuration ———
-export { EnvConfigurationLoader } from './configuration/index.js';
-export type {
-  AppConfig,
-  DatabaseConfig,
-  EventBrokerConfig,
-  ServerConfig,
-  LoggingConfig,
-  ConfigurationLoader,
-  FeatureFlags,
-  ExtendedAppConfig,
-} from './configuration/index.js';
+// Errors & Contracts
+export { InfrastructureErrorCode, InfrastructureErrorMapper } from './errors/index.js';
+export { PrismaErrorTranslator } from './errors/prisma-error-translator.js';
+export type { InfrastructureRepository, PersistenceHealthStatus } from './contracts/index.js';
+export type { AggregateMapper } from './mappers/aggregate-mapper.js';
 
-// ——— Logging ———
-export { LogLevel, StructuredLogger, DefaultLoggerFactory } from './logging/index.js';
-export type {
-  Logger,
-  LoggerFactory,
-  LogContext,
-  LogLevelType,
-  MetricsHook,
-  LogSink,
-} from './logging/index.js';
-
-// ——— Health Checks ———
-export { InfrastructureHealthCheckService } from './health/index.js';
-export type {
-  OverallHealthStatus,
-  ComponentHealthStatus,
-  ApplicationHealthResult,
-  HealthCheckOptions,
-} from './health/index.js';
-
-// ——— Dependency Injection ———
-export { DITokens, Container, Lifetime, CompositionRoot } from './di/index.js';
-export type {
-  DIToken,
-  LifetimeType,
-  FactoryFunction,
-  Registration,
-  CompositionRootOptions,
-} from './di/index.js';
-
-// ——— Application Lifecycle ———
-export { ApplicationStartup, GracefulShutdown } from './lifecycle/index.js';
-export type { StartupOptions, SystemInstance, ShutdownOptions } from './lifecycle/index.js';
-
-// ——— Bootstrap ———
-export { bootstrapRiosSystem } from './bootstrap.js';
-
-// ——— Shared ———
-export type { DateTimeProvider } from './shared/index.js';
-
-// ——— Repositories ———
+// Persistence & Events
+export { TransactionIsolationLevel, PrismaUnitOfWork } from './persistence/index.js';
+export type { UnitOfWork, TransactionContext, TransactionOptions } from './persistence/index.js';
+export { PrismaOutboxRepositoryImpl } from './events/prisma-outbox-repository.impl.js';
 export { ResearchIdentityRepositoryImpl } from './repositories/identity/research-identity-repository.impl.js';
-export type { PrismaClientLike } from './repositories/identity/types/database-client.js';
+export { ResearchIdentityAggregateMapper } from './repositories/identity/mappers/research-identity-mapper.js';
+export { ResearchIdentitySpecificationTranslator } from './repositories/identity/specification/identity-specification-translator.js';
+
+// Persistence Mappers (Sprint 6)
+export { UserPersistenceMapper } from './repositories/identity/mappers/user-persistence-mapper.js';
+export { SessionPersistenceMapper } from './repositories/identity/mappers/session-persistence-mapper.js';
+export { RolePersistenceMapper } from './repositories/identity/mappers/role-persistence-mapper.js';
+export { PermissionPersistenceMapper } from './repositories/identity/mappers/permission-persistence-mapper.js';
+export { RefreshTokenPersistenceMapper } from './repositories/identity/mappers/refresh-token-persistence-mapper.js';
+export { AuditLogPersistenceMapper } from './repositories/identity/mappers/audit-log-persistence-mapper.js';
+
+// Production Prisma Repositories (Sprint 6)
+export { PrismaUserRepository } from './repositories/identity/prisma-user-repository.js';
+export { PrismaSessionRepository } from './repositories/identity/prisma-session-repository.js';
+export { PrismaRoleRepository } from './repositories/identity/prisma-role-repository.js';
+export { PrismaPermissionRepository } from './repositories/identity/prisma-permission-repository.js';
+export { PrismaRefreshTokenRepository } from './repositories/identity/prisma-refresh-token-repository.js';
+export { PrismaAuditLogRepository } from './repositories/identity/prisma-audit-log-repository.js';
+
+// IAM Security Implementations (Sprint 5)
+export {
+  JwtTokenProvider,
+  type JwtProviderConfig,
+} from './security/authentication/jwt-token-provider.js';
+export { BCryptPasswordHasher } from './security/hashing/bcrypt-password-hasher.js';
+export {
+  SecureRandomGenerator,
+  type ISecureRandomGenerator,
+} from './security/crypto/secure-random-generator.js';
+export { IdentitySystemClock } from './security/crypto/system-clock.js';
+export { GuidGenerator, type IGuidGenerator } from './security/crypto/guid-generator.js';
+
+// Legacy In-Memory Repositories (Sprint 5)
+export { InMemoryUserRepository } from './repositories/identity/in-memory-user-repository.js';
+export { InMemorySessionRepository } from './repositories/identity/in-memory-session-repository.js';
+export {
+  InMemoryRoleRepository,
+  InMemoryPermissionRepository,
+} from './repositories/identity/in-memory-role-repository.js';
+
+// DI Container & Composition Root
+export { Container, Lifetime } from './di/container.js';
+export { CompositionRoot, createInMemoryPrismaClient } from './di/composition-root.js';
+export { DITokens } from './di/tokens.js';
+
+// Bootstrap & Lifecycle
+export { bootstrapRiosSystem } from './bootstrap.js';

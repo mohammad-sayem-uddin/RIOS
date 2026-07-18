@@ -1,12 +1,15 @@
 /**
  * API Router — Presentation Layer.
  *
- * Configures and mounts HTTP endpoints for Research Identity, Health, and Swagger.
- * Operates purely as a route mapping registry connecting URLs to Controllers.
+ * Configures and mounts HTTP endpoints for Research Identity, IAM Auth, Health, and Swagger.
+ * Architecture Reference: Volume I – Identity / Chapter 7 §77
  */
 
 import { Router } from 'express';
+import type { RequestHandler } from 'express';
 
+import { AuthenticationController } from '../authentication/authentication.controller.js';
+import { createAuthenticationRouter } from '../authentication/authentication.routes.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
 import type { HealthController } from '../health/health.controller.js';
 import { SwaggerGenerator } from '../swagger/swagger.generator.js';
@@ -18,6 +21,8 @@ export class ApiRouter {
     identityController: ResearchIdentityController,
     healthController: HealthController,
     versionPrefix = '/api/v1',
+    authController?: AuthenticationController,
+    authMiddleware?: RequestHandler,
   ): Router {
     const router = Router();
 
@@ -32,6 +37,15 @@ export class ApiRouter {
 
     router.get('/docs/json', (_req, res) => res.status(200).json(spec));
     router.get('/docs', (_req, res) => res.status(200).type('text/html').send(html));
+
+    // ——— IAM Authentication Sub-Router ———
+    if (authController) {
+      const authRouter = createAuthenticationRouter({
+        controller: authController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}/auth`, authRouter);
+    }
 
     // ——— Research Identity Endpoint Schema Validators ———
     const createValidator = new SchemaValidator({

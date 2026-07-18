@@ -3,15 +3,14 @@
  *
  * Architecture reference:
  * Infrastructure Layer — Composition Root Pattern.
- *
- * Responsibilities:
- * - Registers all infrastructure and application components into the DI container.
- * - Enforces lifetime policies (Singleton, Scoped, Transient).
- * - Validates dependency graph completeness at application startup.
- * - Exposes resolved components to the entry point.
  */
 
-import { ResearchIdentityApplicationServiceImpl } from '@rios/application';
+import {
+  AuthenticationApplicationService,
+  AuthorizationApplicationService,
+  ResearchIdentityApplicationServiceImpl,
+  SessionApplicationService,
+} from '@rios/application';
 import { Result } from '@rios/shared';
 
 import type { AppConfig } from '../configuration/app-config.js';
@@ -21,11 +20,23 @@ import { PrismaDatabaseProvider } from '../database/prisma-database-provider.js'
 import { PrismaOutboxRepositoryImpl } from '../events/prisma-outbox-repository.impl.js';
 import { InfrastructureHealthCheckService } from '../health/health-check-service.js';
 import type { LogLevelType } from '../logging/logger.js';
+import { StructuredAuditLogger } from '../logging/structured-audit-logger.js';
 import { DefaultLoggerFactory, StructuredLogger } from '../logging/structured-logger.js';
 import { PrismaUnitOfWork } from '../persistence/prisma-unit-of-work.js';
 import { ResearchIdentityAggregateMapper } from '../repositories/identity/mappers/research-identity-mapper.js';
+import { PrismaAuditLogRepository } from '../repositories/identity/prisma-audit-log-repository.js';
+import { PrismaPermissionRepository } from '../repositories/identity/prisma-permission-repository.js';
+import { PrismaRefreshTokenRepository } from '../repositories/identity/prisma-refresh-token-repository.js';
+import { PrismaRoleRepository } from '../repositories/identity/prisma-role-repository.js';
+import { PrismaSessionRepository } from '../repositories/identity/prisma-session-repository.js';
+import { PrismaUserRepository } from '../repositories/identity/prisma-user-repository.js';
 import { ResearchIdentityRepositoryImpl } from '../repositories/identity/research-identity-repository.impl.js';
 import { ResearchIdentitySpecificationTranslator } from '../repositories/identity/specification/identity-specification-translator.js';
+import { JwtTokenProvider } from '../security/authentication/jwt-token-provider.js';
+import { GuidGenerator } from '../security/crypto/guid-generator.js';
+import { SecureRandomGenerator } from '../security/crypto/secure-random-generator.js';
+import { IdentitySystemClock } from '../security/crypto/system-clock.js';
+import { BCryptPasswordHasher } from '../security/hashing/bcrypt-password-hasher.js';
 
 import { Container, Lifetime } from './container.js';
 import { DITokens } from './tokens.js';
@@ -237,7 +248,71 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 3. Database Provider
+    // 3. Security Infrastructure Utilities
+    this.container.registerFactory(
+      DITokens.JwtTokenProvider,
+      () => new JwtTokenProvider(),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.PasswordHasher,
+      () => new BCryptPasswordHasher(),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.SecureRandomGenerator,
+      () => new SecureRandomGenerator(),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.IdentitySystemClock,
+      () => new IdentitySystemClock(),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.GuidGenerator,
+      () => new GuidGenerator(),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.AuditLogger,
+      (c) => new StructuredAuditLogger(c.resolve<StructuredLogger>(DITokens.Logger)),
+      Lifetime.SINGLETON,
+    );
+
+    // 4. Identity Repositories (Prisma Production Implementations)
+    this.container.registerFactory(
+      DITokens.UserRepository,
+      (c) => new PrismaUserRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.SessionRepository,
+      (c) => new PrismaSessionRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.RoleRepository,
+      (c) => new PrismaRoleRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.PermissionRepository,
+      (c) => new PrismaPermissionRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.RefreshTokenRepository,
+      (c) => new PrismaRefreshTokenRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+    this.container.registerFactory(
+      DITokens.AuditLogRepository,
+      (c) => new PrismaAuditLogRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    // 5. Database Provider
     this.container.registerFactory(
       DITokens.DatabaseProvider,
       (c) => {
@@ -249,7 +324,7 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 4. Outbox Repository
+    // 6. Outbox Repository & Unit of Work
     this.container.registerFactory(
       DITokens.OutboxRepository,
       (c) => {
@@ -260,7 +335,6 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 5. Unit of Work
     this.container.registerFactory(
       DITokens.UnitOfWork,
       (c) => {
@@ -271,7 +345,7 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 6. Identity Repository Dependencies
+    // 7. Identity Repository Dependencies (Sprint 1-4)
     this.container.registerFactory(
       DITokens.ResearchIdentityAggregateMapper,
       () => new ResearchIdentityAggregateMapper(),
@@ -308,7 +382,7 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 7. Application Services
+    // 8. Application Services (IAM & Research Identity)
     this.container.registerFactory(
       DITokens.ResearchIdentityApplicationService,
       (c) => {
@@ -318,7 +392,31 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
-    // 8. Health Check Service
+    this.container.registerFactory(
+      DITokens.AuthenticationApplicationService,
+      (c) =>
+        new AuthenticationApplicationService(
+          c.resolve(DITokens.UserRepository),
+          c.resolve(DITokens.SessionRepository),
+          c.resolve(DITokens.PasswordHasher),
+          c.resolve(DITokens.JwtTokenProvider),
+        ),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.AuthorizationApplicationService,
+      () => new AuthorizationApplicationService(),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.SessionApplicationService,
+      (c) => new SessionApplicationService(c.resolve(DITokens.SessionRepository)),
+      Lifetime.SINGLETON,
+    );
+
+    // 9. Health Check Service
     this.container.registerFactory(
       DITokens.HealthCheckService,
       (c) => {
@@ -347,6 +445,17 @@ export class CompositionRoot {
       DITokens.DatabaseProvider,
       DITokens.OutboxRepository,
       DITokens.UnitOfWork,
+      DITokens.JwtTokenProvider,
+      DITokens.PasswordHasher,
+      DITokens.UserRepository,
+      DITokens.SessionRepository,
+      DITokens.RoleRepository,
+      DITokens.PermissionRepository,
+      DITokens.RefreshTokenRepository,
+      DITokens.AuditLogRepository,
+      DITokens.AuthenticationApplicationService,
+      DITokens.AuthorizationApplicationService,
+      DITokens.SessionApplicationService,
       DITokens.ResearchIdentityAggregateMapper,
       DITokens.ResearchIdentitySpecificationTranslator,
       DITokens.ResearchIdentityRepository,

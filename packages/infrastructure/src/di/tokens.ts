@@ -26,6 +26,25 @@ export const DITokens = {
 
   // Monitoring & Health
   HealthCheckService: Symbol.for('HealthCheckService'),
+
+  // Sprint 5 & 6 Identity IAM Tokens
+  UserRepository: Symbol.for('UserRepository'),
+  SessionRepository: Symbol.for('SessionRepository'),
+  RoleRepository: Symbol.for('RoleRepository'),
+  PermissionRepository: Symbol.for('PermissionRepository'),
+  RefreshTokenRepository: Symbol.for('RefreshTokenRepository'),
+  AuditLogRepository: Symbol.for('AuditLogRepository'),
+
+  JwtTokenProvider: Symbol.for('JwtTokenProvider'),
+  PasswordHasher: Symbol.for('PasswordHasher'),
+  SecureRandomGenerator: Symbol.for('SecureRandomGenerator'),
+  IdentitySystemClock: Symbol.for('IdentitySystemClock'),
+  GuidGenerator: Symbol.for('GuidGenerator'),
+  AuditLogger: Symbol.for('AuditLogger'),
+
+  AuthenticationApplicationService: Symbol.for('AuthenticationApplicationService'),
+  AuthorizationApplicationService: Symbol.for('AuthorizationApplicationService'),
+  SessionApplicationService: Symbol.for('SessionApplicationService'),
 } as const;
 
 export type DIToken = (typeof DITokens)[keyof typeof DITokens] | string;

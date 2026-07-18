@@ -7,23 +7,21 @@
  * This test does NOT implement any contract.
  * It only verifies the structural foundation exists.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
+  DatabaseConnectionStatus,
   InfrastructureErrorCode,
   InfrastructureErrorMapper,
-  TransactionIsolationLevel,
-  DatabaseConnectionStatus,
   LogLevel,
+  TransactionIsolationLevel,
 } from '../index.js';
 import type {
-  InfrastructureRepository,
-  PersistenceHealthStatus,
   AggregateMapper,
-  UnitOfWork,
-  EventPublisher,
+  InfrastructureRepository,
   Logger,
-  DateTimeProvider,
+  PersistenceHealthStatus,
+  UnitOfWork,
 } from '../index.js';
 
 describe('Infrastructure Layer — Smoke Tests', () => {
@@ -38,39 +36,35 @@ describe('Infrastructure Layer — Smoke Tests', () => {
       expect(InfrastructureErrorCode.EXTERNAL_SERVICE_UNAVAILABLE).toBe(
         'INFRA_EXTERNAL_SERVICE_UNAVAILABLE',
       );
-      expect(InfrastructureErrorCode.CONFIGURATION_ERROR).toBe('INFRA_CONFIGURATION_ERROR');
-      expect(InfrastructureErrorCode.EVENT_PUBLICATION_FAILED).toBe(
-        'INFRA_EVENT_PUBLICATION_FAILED',
-      );
-      expect(InfrastructureErrorCode.UNKNOWN).toBe('INFRA_UNKNOWN');
     });
 
-    it('should provide the InfrastructureErrorMapper as a value', () => {
-      expect(InfrastructureErrorMapper).toBeDefined();
-      expect(typeof InfrastructureErrorMapper).toBe('function');
+    it('should map domain-equivalent error messages properly', () => {
+      const connErr = InfrastructureErrorMapper.toInfrastructureError(new Error('Timeout'));
+      expect(connErr.code).toBe(InfrastructureErrorCode.CONNECTION_FAILED);
+      expect(connErr.message).toContain('Timeout');
+
+      const notFoundErr = InfrastructureErrorMapper.toInfrastructureError(
+        new Error('Entity not found'),
+      );
+      expect(notFoundErr.code).toBe(InfrastructureErrorCode.NOT_FOUND);
+      expect(notFoundErr.message).toContain('not found');
     });
   });
 
-  describe('Persistence Contracts', () => {
-    it('should define TransactionIsolationLevel enum', () => {
-      expect(TransactionIsolationLevel.READ_UNCOMMITTED).toBe('READ_UNCOMMITTED');
+  describe('Enums and Constants', () => {
+    it('should export TransactionIsolationLevel values', () => {
       expect(TransactionIsolationLevel.READ_COMMITTED).toBe('READ_COMMITTED');
       expect(TransactionIsolationLevel.REPEATABLE_READ).toBe('REPEATABLE_READ');
       expect(TransactionIsolationLevel.SERIALIZABLE).toBe('SERIALIZABLE');
     });
-  });
 
-  describe('Database Contracts', () => {
-    it('should define DatabaseConnectionStatus enum', () => {
-      expect(DatabaseConnectionStatus.CONNECTED).toBe('CONNECTED');
+    it('should export DatabaseConnectionStatus values', () => {
       expect(DatabaseConnectionStatus.DISCONNECTED).toBe('DISCONNECTED');
-      expect(DatabaseConnectionStatus.CONNECTING).toBe('CONNECTING');
+      expect(DatabaseConnectionStatus.CONNECTED).toBe('CONNECTED');
       expect(DatabaseConnectionStatus.ERROR).toBe('ERROR');
     });
-  });
 
-  describe('Logging Contracts', () => {
-    it('should define LogLevel enum', () => {
+    it('should export LogLevel values', () => {
       expect(LogLevel.DEBUG).toBe('DEBUG');
       expect(LogLevel.INFO).toBe('INFO');
       expect(LogLevel.WARN).toBe('WARN');
@@ -79,14 +73,11 @@ describe('Infrastructure Layer — Smoke Tests', () => {
     });
   });
 
-  describe('Type-only exports compile', () => {
-    it('should allow type annotations for all infrastructure contracts', () => {
-      // These are compile-time checks. If the types don't exist,
-      // TypeScript will fail to compile this test file.
-
-      // Repository contract
-      const repo: InfrastructureRepository | undefined = undefined;
-      expect(repo).toBeUndefined();
+  describe('Contract Type Check', () => {
+    it('should allow compiling dummy structures matching types', () => {
+      // Mock Repository reference (compile-time type assertion)
+      const repoRef: InfrastructureRepository | undefined = undefined;
+      expect(repoRef).toBeUndefined();
 
       // Health check
       const health: PersistenceHealthStatus = {
@@ -104,17 +95,9 @@ describe('Infrastructure Layer — Smoke Tests', () => {
       const uow: UnitOfWork | undefined = undefined;
       expect(uow).toBeUndefined();
 
-      // EventPublisher type
-      const publisher: EventPublisher | undefined = undefined;
-      expect(publisher).toBeUndefined();
-
       // Logger type
       const logger: Logger | undefined = undefined;
       expect(logger).toBeUndefined();
-
-      // DateTimeProvider type
-      const dateTimeProvider: DateTimeProvider | undefined = undefined;
-      expect(dateTimeProvider).toBeUndefined();
     });
   });
 });

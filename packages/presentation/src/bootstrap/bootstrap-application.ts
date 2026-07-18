@@ -5,15 +5,22 @@
  * route mounting, and returns a production-ready PresentationHttpServer.
  */
 
-import type { ResearchIdentityApplicationService } from '@rios/application';
-import type { Container, Logger, InfrastructureHealthCheckService } from '@rios/infrastructure';
+import type {
+  AuthenticationApplicationService,
+  GetCurrentUserHandler,
+  ResearchIdentityApplicationService,
+} from '@rios/application';
+import type { ISessionRepository, ITokenProvider } from '@rios/domain';
+import type { Container, InfrastructureHealthCheckService, Logger } from '@rios/infrastructure';
 import { CompositionRoot, DITokens } from '@rios/infrastructure';
 import express from 'express';
 
+import { AuthenticationController } from '../authentication/authentication.controller.js';
 import { PresentationConfigurationLoader } from '../configuration/presentation-config-loader.js';
 import type { PresentationConfig } from '../configuration/presentation-config.js';
 import { ResearchIdentityController } from '../controllers/research-identity.controller.js';
 import { HealthController } from '../health/health.controller.js';
+import { createAuthenticationMiddleware } from '../middleware/authentication.middleware.js';
 import { createBodyParserMiddleware } from '../middleware/body-parser.middleware.js';
 import { createCompressionMiddleware } from '../middleware/compression.middleware.js';
 import { createCorrelationIdMiddleware } from '../middleware/correlation-id.middleware.js';
@@ -31,6 +38,8 @@ export interface BootstrapPresentationOptions {
   readonly config?: Partial<PresentationConfig>;
   readonly container?: Container;
   readonly applicationService?: ResearchIdentityApplicationService;
+  readonly authApplicationService?: AuthenticationApplicationService;
+  readonly getCurrentUserHandler?: GetCurrentUserHandler;
   readonly healthService?: InfrastructureHealthCheckService;
   readonly logger?: Logger;
 }
@@ -52,6 +61,17 @@ export function bootstrapPresentationServer(
     container.resolve<ResearchIdentityApplicationService>(
       DITokens.ResearchIdentityApplicationService,
     );
+
+  const authApplicationService: AuthenticationApplicationService =
+    options.authApplicationService ??
+    container.resolve<AuthenticationApplicationService>(DITokens.AuthenticationApplicationService);
+
+  const tokenProvider: ITokenProvider = container.resolve<ITokenProvider>(
+    DITokens.JwtTokenProvider,
+  );
+  const sessionRepository: ISessionRepository = container.resolve<ISessionRepository>(
+    DITokens.SessionRepository,
+  );
 
   const healthService: InfrastructureHealthCheckService | undefined =
     options.healthService ??
@@ -79,12 +99,28 @@ export function bootstrapPresentationServer(
   app.use(createBodyParserMiddleware(config.bodySizeLimit));
   app.use(createTimeoutMiddleware(config.requestTimeoutMs));
 
+  // Instantiate Security Middleware
+  const authMiddleware = createAuthenticationMiddleware({
+    tokenProvider,
+    sessionRepository,
+  });
+
   // Instantiate Controllers
   const identityController = new ResearchIdentityController(applicationService);
   const healthController = new HealthController(healthService);
+  const authController = new AuthenticationController(
+    authApplicationService,
+    options.getCurrentUserHandler,
+  );
 
   // Mount ApiRouter
-  const router = ApiRouter.create(identityController, healthController, config.versionPrefix);
+  const router = ApiRouter.create(
+    identityController,
+    healthController,
+    config.versionPrefix,
+    authController,
+    authMiddleware,
+  );
   app.use('/', router);
 
   // Mount Global Exception Handler

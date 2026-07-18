@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@prisma/client": "^6.2.1",
     "@rios/application": "workspace:*",
     "@rios/domain": "workspace:*",
     "@rios/identity": "workspace:*",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@rios/typescript-config": "workspace:*",
+    "prisma": "^6.2.1",
     "typescript": "^5.6.3"
   }
 }
