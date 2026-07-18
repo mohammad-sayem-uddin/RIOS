@@ -8,16 +8,16 @@
     "sourceMap": true,
     "composite": true,
     "paths": {
-      "@api/*": ["./src/*"]
+      "@presentation/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/domain" },
-    { "path": "../../packages/application" },
-    { "path": "../../packages/infrastructure" },
-    { "path": "../../packages/presentation" }
+    { "path": "../shared" },
+    { "path": "../domain" },
+    { "path": "../identity" },
+    { "path": "../application" },
+    { "path": "../infrastructure" }
   ]
 }

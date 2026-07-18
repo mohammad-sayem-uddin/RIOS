@@ -1,0 +1,44 @@
+{
+  "name": "@rios/presentation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RIOS Presentation Layer — HTTP API adapter, REST controllers, DTOs, request validation, middleware",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo",
+    "dev": "tsc -b --watch",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rios/application": "workspace:*",
+    "@rios/domain": "workspace:*",
+    "@rios/identity": "workspace:*",
+    "@rios/infrastructure": "workspace:*",
+    "@rios/shared": "workspace:*",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "@rios/typescript-config": "workspace:*",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0"
+  }
+}

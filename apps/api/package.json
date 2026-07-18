@@ -19,6 +19,7 @@
     "@rios/application": "workspace:*",
     "@rios/domain": "workspace:*",
     "@rios/infrastructure": "workspace:*",
+    "@rios/presentation": "workspace:*",
     "@rios/shared": "workspace:*"
   },
   "devDependencies": {
