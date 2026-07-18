@@ -7,18 +7,6 @@
  * Architecture:
  * Infrastructure depends on Application, Identity, and Shared.
  * Never the reverse.
- *
- * Contents:
- * - contracts: Repository contract wrapper (extends domain contract with Result<T>).
- * - errors: InfrastructureError and error mapper.
- * - mappers: AggregateMapper for Domain ↔ Persistence ↔ Database conversion.
- * - persistence: UnitOfWork and EntityPersistence contracts.
- * - database: DatabaseProvider contract (connection, transactions, raw queries).
- * - events: EventPublisher and OutboxStore contracts.
- * - configuration: AppConfig and ConfigurationLoader contracts.
- * - logging: Logger, LoggerFactory, and LogLevel contracts.
- * - shared: DateTimeProvider contract.
- * - repositories: Placeholder for future concrete repository implementations.
  */
 
 // ——— Contracts ———
@@ -49,8 +37,12 @@ export type {
 } from './persistence/index.js';
 
 // ——— Database ———
-export { DatabaseConnectionStatus } from './database/index.js';
-export type { DatabaseProvider, DatabaseConnectionStatusType } from './database/index.js';
+export { DatabaseConnectionStatus, PrismaDatabaseProvider } from './database/index.js';
+export type {
+  DatabaseProvider,
+  DatabaseConnectionStatusType,
+  PrismaClientInterface,
+} from './database/index.js';
 
 // ——— Events ———
 export { OutboxStatus, OutboxEventMapper, PrismaOutboxRepositoryImpl } from './events/index.js';
@@ -64,6 +56,7 @@ export type {
 } from './events/index.js';
 
 // ——— Configuration ———
+export { EnvConfigurationLoader } from './configuration/index.js';
 export type {
   AppConfig,
   DatabaseConfig,
@@ -71,11 +64,46 @@ export type {
   ServerConfig,
   LoggingConfig,
   ConfigurationLoader,
+  FeatureFlags,
+  ExtendedAppConfig,
 } from './configuration/index.js';
 
 // ——— Logging ———
-export { LogLevel } from './logging/index.js';
-export type { Logger, LoggerFactory, LogContext, LogLevelType } from './logging/index.js';
+export { LogLevel, StructuredLogger, DefaultLoggerFactory } from './logging/index.js';
+export type {
+  Logger,
+  LoggerFactory,
+  LogContext,
+  LogLevelType,
+  MetricsHook,
+  LogSink,
+} from './logging/index.js';
+
+// ——— Health Checks ———
+export { InfrastructureHealthCheckService } from './health/index.js';
+export type {
+  OverallHealthStatus,
+  ComponentHealthStatus,
+  ApplicationHealthResult,
+  HealthCheckOptions,
+} from './health/index.js';
+
+// ——— Dependency Injection ———
+export { DITokens, Container, Lifetime, CompositionRoot } from './di/index.js';
+export type {
+  DIToken,
+  LifetimeType,
+  FactoryFunction,
+  Registration,
+  CompositionRootOptions,
+} from './di/index.js';
+
+// ——— Application Lifecycle ———
+export { ApplicationStartup, GracefulShutdown } from './lifecycle/index.js';
+export type { StartupOptions, SystemInstance, ShutdownOptions } from './lifecycle/index.js';
+
+// ——— Bootstrap ———
+export { bootstrapRiosSystem } from './bootstrap.js';
 
 // ——— Shared ———
 export type { DateTimeProvider } from './shared/index.js';
