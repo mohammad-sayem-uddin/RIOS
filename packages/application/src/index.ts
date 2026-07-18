@@ -46,3 +46,6 @@ export {
   ConcurrencyConflictError,
   ApplicationOperationError,
 } from './errors/index.js';
+
+// ─── Domain Event Coordination ────────────────────────────────────────
+export { DomainEventCoordinator, type DomainEventSource } from './events/index.js';

@@ -35,7 +35,7 @@ describe('ResearchIdentityRepository contract', () => {
      * Compile-time structural test: an object implementing the interface
      * must have exactly these four methods. TypeScript enforces this.
      */
-    it('should define save, findById, exists, and delete methods', () => {
+    it('should define save, findById, findAll, exists, and delete methods', () => {
       const assertInterface = (_repo: ResearchIdentityRepository): void => {
         // This function body is intentionally empty.
         // If the interface changes shape, TypeScript compilation will fail.
@@ -100,6 +100,19 @@ describe('ResearchIdentityRepository contract', () => {
       const assertDelete: AssertDelete = true;
       expect(assertDelete).toBe(true);
     });
+
+    it('should require findAll to accept no arguments and return Promise<Result<ResearchIdentity[]>>', () => {
+      // Type-level assertion: findAll must match this signature
+      type FindAllSignature = () => Promise<Result<ResearchIdentity[]>>;
+      type RepoFindAllMethod = ResearchIdentityRepository['findAll'];
+      type AssertFindAll = FindAllSignature extends RepoFindAllMethod
+        ? RepoFindAllMethod extends FindAllSignature
+          ? true
+          : false
+        : false;
+      const assertFindAll: AssertFindAll = true;
+      expect(assertFindAll).toBe(true);
+    });
   });
 
   describe('dependency analysis', () => {
@@ -149,11 +162,13 @@ describe('ResearchIdentityRepository contract', () => {
       // The repository methods express domain intent:
       // - save() — persist the aggregate (not "create" or "update")
       // - findById() — retrieve by identity (not "get" or "select")
+      // - findAll() — enumerate the collection (not "SELECT *")
       // - exists() — check existence (not "count" or "query")
       // - delete() — remove the aggregate
       //
-      // No findAll, paginate, search, filter, or other
+      // No paginate, search, filter, or other
       // infrastructure-driven methods exist.
+      // findAll() is a fundamental collection operation in the domain.
       expect(true).toBe(true);
     });
 

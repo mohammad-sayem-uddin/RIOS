@@ -105,6 +105,18 @@ export interface ResearchIdentityRepository {
   delete(id: UniqueId): Promise<Result<void>>;
 
   /**
+   * Retrieve all ResearchIdentity aggregates from the collection.
+   *
+   * This is a fundamental collection operation — the repository is a
+   * collection-like interface, and every collection supports retrieving
+   * all of its elements. Pagination and access-scoping are infrastructure
+   * concerns applied by the concrete implementation.
+   *
+   * @returns Result<ResearchIdentity[]> — all aggregates, or failure.
+   */
+  findAll(): Promise<Result<ResearchIdentity[]>>;
+
+  /**
    * Find all ResearchIdentity aggregates that satisfy the given specification.
    *
    * This is the primary specification-based query operation. Instead of

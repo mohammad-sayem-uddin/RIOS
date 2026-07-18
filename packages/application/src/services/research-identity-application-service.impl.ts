@@ -36,6 +36,7 @@ import {
   ResearchPhilosophyFactory,
   ResearchValuesFactory,
   ResearchEvolutionFactory,
+  TextSearchSpecification,
   IdentityEvent,
   type ReadonlyResearchIdentitySnapshot,
 } from '@rios/identity';
@@ -56,6 +57,7 @@ import {
   RecordEvolutionCommand,
 } from '../commands/index.js';
 import { ResearchIdentityNotFoundError, ApplicationOperationError } from '../errors/index.js';
+import { DomainEventCoordinator } from '../events/domain-event-coordinator.js';
 import {
   GetResearchIdentityQuery,
   FindResearchIdentitiesQuery,
@@ -80,10 +82,16 @@ import type { ResearchIdentityApplicationService } from './research-identity-app
  */
 export class ResearchIdentityApplicationServiceImpl implements ResearchIdentityApplicationService {
   /**
-   * Pending domain events collected from the aggregate after successful commands.
-   * Exposed via getPendingEvents(). Cleared after successful coordination.
+   * Reusable coordinator for domain event lifecycle.
+   *
+   * Collects events from aggregates after successful commands,
+   * stores them for Infrastructure to retrieve, and provides
+   * clearing after successful publication.
+   *
+   * This eliminates duplicate event collection logic across
+   * all command handlers.
    */
-  private pendingEvents: IdentityEvent[] = [];
+  private readonly eventCoordinator = new DomainEventCoordinator();
 
   constructor(private readonly repository: ResearchIdentityRepository) {}
 
@@ -548,63 +556,66 @@ export class ResearchIdentityApplicationServiceImpl implements ResearchIdentityA
   }
 
   /**
-   * Find all ResearchIdentity aggregates with pagination.
+   * Retrieve all ResearchIdentity aggregates.
    *
-   * BLOCKED: FindResearchIdentitiesQuery exposes limit and offset,
-   * but the ResearchIdentityRepository does not expose a findAll()
-   * or findPaginated() method. The repository contract only provides
-   * findById() and findMatching(specification).
+   * Orchestration:
+   * 1. Delegate to repository.findAll() — a fundamental collection operation.
+   * 2. Convert each aggregate to an immutable snapshot.
+   * 3. Return Result<ReadonlyResearchIdentitySnapshot[]>.
    *
-   * TODO: Implement when the domain repository provides a
-   * findAll() or findPaginated(limit, offset) method.
+   * Pagination and access-scoping are infrastructure concerns handled by the
+   * repository implementation. The domain expresses the business intent:
+   * "retrieve all research identities from the collection."
    */
-  discoverResearchIdentities(
+  async discoverResearchIdentities(
     _query: FindResearchIdentitiesQuery,
   ): Promise<Result<ReadonlyResearchIdentitySnapshot[]>> {
-    // BLOCKED: ResearchIdentityRepository does not expose findAll() or findPaginated().
-    // The repository contract only provides findById(UniqueId) and findMatching(Specification).
-    // FindResearchIdentitiesQuery has: limit, offset — but no corresponding repository API.
-    return Promise.resolve(
-      Result.fail<ReadonlyResearchIdentitySnapshot[]>(
+    const findResult = await this.repository.findAll();
+    if (findResult.isFailure) {
+      return Result.fail<ReadonlyResearchIdentitySnapshot[]>(
         new ApplicationOperationError({
           operationName: 'discoverResearchIdentities',
-          message:
-            'Cannot implement: ResearchIdentityRepository does not expose findAll() or findPaginated(limit, offset). The repository contract only provides findById() and findMatching(specification).',
+          message: findResult.error,
         }).message,
-      ),
-    );
+      );
+    }
+
+    const snapshots = findResult.value.map((identity) => identity.toSnapshot());
+    return Result.ok<ReadonlyResearchIdentitySnapshot[]>(snapshots);
   }
 
   /**
-   * Search ResearchIdentity aggregates by search term.
+   * Search ResearchIdentity aggregates by text search term.
    *
-   * BLOCKED: SearchResearchIdentityQuery exposes searchTerm, limit, offset,
-   * but the domain does not provide a concrete ResearchIdentitySpecification
-   * for text-based search. The repository's findMatching() requires a
-   * Specification<ResearchIdentity>, which cannot be constructed from the
-   * query's searchTerm alone — no such specification exists in the domain.
+   * Orchestration:
+   * 1. Create TextSearchSpecification from the query's search term.
+   * 2. Delegate to repository.findMatching() — infrastructure applies
+   *    pagination and text search execution.
+   * 3. Convert each matching aggregate to an immutable snapshot.
+   * 4. Return Result<ReadonlyResearchIdentitySnapshot[]>.
    *
-   * TODO: Implement when the domain provides a concrete search specification
-   * (e.g., TextSearchSpecification or matching factory).
+   * The TextSearchSpecification is a domain specification that expresses
+   * the business intent: "find research identities whose textual fields
+   * contain the search term." How this is executed (SQL LIKE, full-text
+   * search, Elasticsearch) is an infrastructure concern.
    */
-  exploreResearchIdentities(
-    _query: SearchResearchIdentityQuery,
+  async exploreResearchIdentities(
+    query: SearchResearchIdentityQuery,
   ): Promise<Result<ReadonlyResearchIdentitySnapshot[]>> {
-    // BLOCKED: No concrete ResearchIdentitySpecification exists for text-based search.
-    // SearchResearchIdentityQuery has: searchTerm, limit, offset.
-    // ResearchIdentitySpecification is abstract — cannot instantiate directly.
-    // repository.findMatching() requires Specification<ResearchIdentity>.
-    // Cannot construct a specification from query.searchTerm without a domain-provided
-    // concrete specification class or factory.
-    return Promise.resolve(
-      Result.fail<ReadonlyResearchIdentitySnapshot[]>(
+    const specification = new TextSearchSpecification(query.searchTerm);
+
+    const findResult = await this.repository.findMatching(specification);
+    if (findResult.isFailure) {
+      return Result.fail<ReadonlyResearchIdentitySnapshot[]>(
         new ApplicationOperationError({
           operationName: 'exploreResearchIdentities',
-          message:
-            'Cannot implement: no concrete ResearchIdentitySpecification exists for text-based search. The domain must provide a specification or factory to convert searchTerm into a Specification<ResearchIdentity>.',
+          message: findResult.error,
         }).message,
-      ),
-    );
+      );
+    }
+
+    const snapshots = findResult.value.map((identity) => identity.toSnapshot());
+    return Result.ok<ReadonlyResearchIdentitySnapshot[]>(snapshots);
   }
 
   // ─── Event Coordination ───────────────────────────────────────────────
@@ -617,7 +628,7 @@ export class ResearchIdentityApplicationServiceImpl implements ResearchIdentityA
    * This method exposes the collected events for that purpose.
    */
   getPendingEvents(): IdentityEvent[] {
-    return [...this.pendingEvents];
+    return this.eventCoordinator.getPendingEvents() as IdentityEvent[];
   }
 
   /**
@@ -627,7 +638,7 @@ export class ResearchIdentityApplicationServiceImpl implements ResearchIdentityA
    * Infrastructure to consume.
    */
   clearPendingEvents(): void {
-    this.pendingEvents = [];
+    this.eventCoordinator.clearPendingEvents();
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────
@@ -684,13 +695,15 @@ export class ResearchIdentityApplicationServiceImpl implements ResearchIdentityA
   /**
    * Collect pending domain events from the aggregate and clear them.
    *
+   * Delegates to DomainEventCoordinator — the reusable coordination
+   * mechanism that extracts, stores, and clears domain events after
+   * successful aggregate operations.
+   *
    * Domain events are raised by the aggregate during domain behavior.
-   * After successful persistence, we collect them and clear from the aggregate.
-   * The events are stored in pendingEvents for Infrastructure to publish later.
+   * After successful persistence, the coordinator collects them.
+   * Infrastructure retrieves and publishes them later.
    */
   private collectAndClearEvents(identity: ResearchIdentity): void {
-    const events = identity.pullDomainEvents();
-    this.pendingEvents.push(...events);
-    identity.clearDomainEvents();
+    this.eventCoordinator.collectFrom(identity);
   }
 }

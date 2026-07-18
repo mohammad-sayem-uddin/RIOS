@@ -112,4 +112,5 @@ export {
   OrSpecification,
   NotSpecification,
   ResearchIdentitySpecification,
+  TextSearchSpecification,
 } from './domain/specifications/index.js';
