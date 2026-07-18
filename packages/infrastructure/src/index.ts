@@ -53,8 +53,15 @@ export { DatabaseConnectionStatus } from './database/index.js';
 export type { DatabaseProvider, DatabaseConnectionStatusType } from './database/index.js';
 
 // ——— Events ———
-export type { EventPublisher } from './events/index.js';
-export type { OutboxStore, OutboxEntry } from './events/index.js';
+export { OutboxStatus, OutboxEventMapper, PrismaOutboxRepositoryImpl } from './events/index.js';
+export type {
+  EventPublisher,
+  OutboxStore,
+  OutboxEntry,
+  OutboxRecord,
+  OutboxStatusType,
+  OutboxRepository,
+} from './events/index.js';
 
 // ——— Configuration ———
 export type {

@@ -35,6 +35,8 @@ import type {
 } from '../../contracts/repository.contract.js';
 import type { DatabaseProvider } from '../../database/database-provider.js';
 import { InfrastructureErrorMapper } from '../../errors/infrastructure-error-mapper.js';
+import { OutboxEventMapper } from '../../events/outbox-event-mapper.js';
+import type { OutboxRepository } from '../../events/outbox-repository.js';
 import type { Logger } from '../../logging/logger.js';
 import type { TransactionContext } from '../../persistence/unit-of-work.js';
 
@@ -52,6 +54,7 @@ import type { PrismaClientLike } from './types/database-client.js';
  * - ResearchIdentitySpecificationTranslator: Specification → Prisma query conversion.
  * - InfrastructureErrorMapper: Prisma error → InfrastructureError conversion.
  * - Logger: Structured logging.
+ * - OutboxRepository: Transactional outbox event persistence.
  */
 export class ResearchIdentityRepositoryImpl
   implements ResearchIdentityRepository, InfrastructureRepository
@@ -64,6 +67,7 @@ export class ResearchIdentityRepositoryImpl
     private readonly logger: Logger,
     mapper?: ResearchIdentityAggregateMapper,
     translator?: ResearchIdentitySpecificationTranslator,
+    private readonly outboxRepository?: OutboxRepository,
   ) {
     this.mapper = mapper ?? new ResearchIdentityAggregateMapper();
     this.translator = translator ?? new ResearchIdentitySpecificationTranslator();
@@ -77,7 +81,8 @@ export class ResearchIdentityRepositoryImpl
    * Persistence flow:
    * 1. Aggregate → Persistence Entity (via mapper.toPersistence)
    * 2. Persistence Entity → Prisma upsert (via client)
-   * 3. Returns Result.ok on success, Result.fail on error
+   * 3. Pending Domain Events → OutboxRecords → OutboxRepository.store (transactional)
+   * 4. Returns Result.ok on success, Result.fail on error
    *
    * @param aggregate - The ResearchIdentity to save.
    * @param context - Optional transaction context from UnitOfWork.
@@ -93,6 +98,23 @@ export class ResearchIdentityRepositoryImpl
         create: this.toCreateInput(persistence),
         update: this.toUpdateInput(persistence),
       });
+
+      if (this.outboxRepository !== undefined) {
+        const pendingEvents = aggregate.clearEvents();
+        if (pendingEvents.length > 0) {
+          const outboxRecords = pendingEvents.map((e) =>
+            OutboxEventMapper.toRecord(e, 'ResearchIdentity'),
+          );
+          const outboxResult = await this.outboxRepository.store(outboxRecords, context);
+          if (outboxResult.isFailure) {
+            this.logger.error('Failed to store domain events in outbox during save', {
+              id: persistence.id,
+              error: outboxResult.error,
+            });
+            return Result.fail(`Outbox storage failed: ${outboxResult.error}`);
+          }
+        }
+      }
 
       this.logger.debug('ResearchIdentity saved', { id: persistence.id });
       return Result.ok(undefined);
