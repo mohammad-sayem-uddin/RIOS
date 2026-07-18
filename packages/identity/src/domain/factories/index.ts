@@ -13,3 +13,6 @@ export { ResearchGoalFactory } from './research-goal-factory.js';
 export { ResearchContributionFactory } from './research-contribution-factory.js';
 export { ResearchEvolutionFactory } from './research-evolution-factory.js';
 export { ResearchIdentityFactory } from './research-identity-factory.js';
+export { ResearchVisionFactory } from './research-vision-factory.js';
+export { ResearchPhilosophyFactory } from './research-philosophy-factory.js';
+export { ResearchValuesFactory } from './research-values-factory.js';

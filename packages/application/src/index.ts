@@ -37,6 +37,9 @@ export {
 // ─── Service Contracts ─────────────────────────────────────────────────
 export type { ResearchIdentityApplicationService } from './services/index.js';
 
+// ─── Service Implementations ───────────────────────────────────────────
+export { ResearchIdentityApplicationServiceImpl } from './services/index.js';
+
 // ─── Errors ────────────────────────────────────────────────────────────
 export {
   ResearchIdentityNotFoundError,

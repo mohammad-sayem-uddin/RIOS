@@ -19,6 +19,7 @@
 import { Result } from '@rios/shared';
 
 import { ResearchArea } from '../entities/research-area.js';
+import { ResearchQuestion } from '../entities/research-question.js';
 import {
   InvalidConfidenceLevelError,
   InvalidResearchFocusError,
@@ -90,6 +91,49 @@ export class ResearchAreaFactory {
     return ResearchArea.create({
       name: nameResult.value,
       description: descriptionResult.value,
+      status: statusResult.value,
+      confidence: confidenceResult.value,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Create a valid ResearchQuestion from primitive inputs.
+   *
+   * @param question - The question statement (1-200 chars)
+   * @param motivation - Why this question matters (1-200 chars)
+   * @returns Result<ResearchQuestion>
+   */
+  static createQuestion(question: string, motivation: string): Result<ResearchQuestion> {
+    const questionResult = ResearchFocus.create(question);
+    if (questionResult.isFailure) {
+      return Result.fail<ResearchQuestion>(
+        new InvalidResearchFocusError(questionResult.error).message,
+      );
+    }
+
+    const motivationResult = ResearchFocus.create(motivation);
+    if (motivationResult.isFailure) {
+      return Result.fail<ResearchQuestion>(
+        new InvalidResearchFocusError(motivationResult.error).message,
+      );
+    }
+
+    const confidenceResult = ConfidenceLevel.create(ResearchAreaFactory.DEFAULT_CONFIDENCE);
+    if (confidenceResult.isFailure) {
+      return Result.fail<ResearchQuestion>(
+        new InvalidConfidenceLevelError(ResearchAreaFactory.DEFAULT_CONFIDENCE).message,
+      );
+    }
+
+    const statusResult = ResearchStatus.create('Active');
+    if (statusResult.isFailure) {
+      return Result.fail<ResearchQuestion>(statusResult.error);
+    }
+
+    return ResearchQuestion.create({
+      question: questionResult.value,
+      motivation: motivationResult.value,
       status: statusResult.value,
       confidence: confidenceResult.value,
       createdAt: new Date().toISOString(),

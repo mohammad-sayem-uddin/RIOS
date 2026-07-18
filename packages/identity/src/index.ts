@@ -97,6 +97,9 @@ export {
   ResearchGoalFactory,
   ResearchContributionFactory,
   ResearchEvolutionFactory,
+  ResearchVisionFactory,
+  ResearchPhilosophyFactory,
+  ResearchValuesFactory,
 } from './domain/factories/index.js';
 
 // ─── Domain Repositories ──────────────────────────────────────────────
