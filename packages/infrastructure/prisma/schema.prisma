@@ -185,6 +185,10 @@ model ResearchProfile {
   portfolioAssets  PortfolioAsset[]
   publications     Publication[]
   researchProjects ResearchProject[]
+  researchDatasets ResearchDataset[]
+  softwareArtifacts SoftwareArtifact[]
+  researchAssets   ResearchAsset[]
+  experiments      Experiment[]
 
   @@index([userId])
   @@map("research_profiles")
@@ -476,4 +480,186 @@ model ProjectMember {
   @@index([projectId])
   @@map("project_members")
 }
+
+// ─── Sprint 9 — Research Assets & Scholarly Resources Domain Models ──────────
+
+enum AssetCategory {
+  DATASET
+  SOFTWARE
+  MODEL
+  EXPERIMENT
+  PRESENTATION
+  POSTER
+  DEMO
+  VIDEO
+  DOCUMENTATION
+  SUPPLEMENTARY
+  EXTERNAL
+}
+
+enum AssetVisibility {
+  PUBLIC
+  PRIVATE
+  INTERNAL
+  RESTRICTED
+}
+
+enum AssetAccessLevel {
+  OPEN
+  EMBARGOED
+  RESTRICTED
+  CLOSED
+}
+
+model ResearchDataset {
+  id              String           @id @default(uuid()) @db.Uuid
+  profileId       String           @map("profile_id") @db.Uuid
+  title           String           @db.VarChar(255)
+  description     String           @db.Text
+  doi             String?          @unique @db.VarChar(255)
+  license         String?          @db.VarChar(100)
+  visibility      AssetVisibility  @default(PUBLIC)
+  accessLevel     AssetAccessLevel @default(OPEN) @map("access_level")
+  storageProvider String?          @map("storage_provider") @db.VarChar(100)
+  datasetUrl      String?          @map("dataset_url") @db.Text
+  field           String?          @db.VarChar(150)
+  area            String?          @db.VarChar(150)
+  isPublished     Boolean          @default(false) @map("is_published")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile  ResearchProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  versions DatasetVersion[]
+
+  @@index([profileId])
+  @@index([doi])
+  @@index([visibility])
+  @@map("research_datasets")
+}
+
+model DatasetVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  datasetId     String   @map("dataset_id") @db.Uuid
+  versionNumber String   @map("version_number") @db.VarChar(50)
+  title         String   @db.VarChar(255)
+  description   String?  @db.Text
+  fileUrl       String   @map("file_url") @db.Text
+  fileSizeBytes BigInt   @map("file_size_bytes")
+  checksum      String?  @db.VarChar(255)
+  changelog     String?  @db.Text
+  releaseDate   DateTime @default(now()) @map("release_date") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  dataset ResearchDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId])
+  @@map("dataset_versions")
+}
+
+model SoftwareArtifact {
+  id                   String          @id @default(uuid()) @db.Uuid
+  profileId            String          @map("profile_id") @db.Uuid
+  name                 String          @db.VarChar(255)
+  description          String          @db.Text
+  programmingLanguages String?         @map("programming_languages") @db.Text
+  frameworks           String?         @db.Text
+  license              String?         @db.VarChar(100)
+  visibility           AssetVisibility @default(PUBLIC)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile      ResearchProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  repositories Repository[]
+  releases     SoftwareRelease[]
+
+  @@index([profileId])
+  @@map("software_artifacts")
+}
+
+model Repository {
+  id                 String   @id @default(uuid()) @db.Uuid
+  softwareArtifactId String?  @map("software_artifact_id") @db.Uuid
+  name               String   @db.VarChar(255)
+  url                String   @unique @db.Text
+  provider           String   @default("GITHUB") @db.VarChar(50)
+  isPrivate          Boolean  @default(false) @map("is_private")
+  defaultBranch      String   @default("main") @map("default_branch") @db.VarChar(100)
+  primaryLanguage    String?  @map("primary_language") @db.VarChar(100)
+  starsCount         Int      @default(0) @map("stars_count")
+  forksCount         Int      @default(0) @map("forks_count")
+  openIssuesCount    Int      @default(0) @map("open_issues_count")
+  description        String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  softwareArtifact SoftwareArtifact? @relation(fields: [softwareArtifactId], references: [id], onDelete: SetNull)
+
+  @@index([url])
+  @@index([softwareArtifactId])
+  @@map("repositories")
+}
+
+model SoftwareRelease {
+  id                 String   @id @default(uuid()) @db.Uuid
+  softwareArtifactId String   @map("software_artifact_id") @db.Uuid
+  version            String   @db.VarChar(50)
+  title              String   @db.VarChar(255)
+  tagName            String   @map("tag_name") @db.VarChar(100)
+  targetCommitish    String?  @map("target_commitish") @db.VarChar(100)
+  description        String?  @db.Text
+  isPrerelease       Boolean  @default(false) @map("is_prerelease")
+  releasedAt         DateTime @default(now()) @map("released_at") @db.Timestamptz
+  downloadUrl        String?  @map("download_url") @db.Text
+
+  softwareArtifact SoftwareArtifact @relation(fields: [softwareArtifactId], references: [id], onDelete: Cascade)
+
+  @@index([softwareArtifactId])
+  @@map("software_releases")
+}
+
+model Experiment {
+  id             String    @id @default(uuid()) @db.Uuid
+  profileId      String?   @map("profile_id") @db.Uuid
+  projectId      String?   @map("project_id") @db.Uuid
+  title          String    @db.VarChar(255)
+  description    String?   @db.Text
+  parametersJson String?   @map("parameters_json") @db.Text
+  metricsJson    String?   @map("metrics_json") @db.Text
+  status         String    @default("PLANNED") @db.VarChar(50)
+  executedAt     DateTime? @map("executed_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([projectId])
+  @@map("experiments")
+}
+
+model ResearchAsset {
+  id            String           @id @default(uuid()) @db.Uuid
+  profileId     String           @map("profile_id") @db.Uuid
+  publicationId String?          @map("publication_id") @db.Uuid
+  projectId     String?          @map("project_id") @db.Uuid
+  title         String           @db.VarChar(255)
+  description   String?          @db.Text
+  category      AssetCategory
+  fileUrl       String?          @map("file_url") @db.Text
+  mimeType      String?          @map("mime_type") @db.VarChar(100)
+  fileSizeBytes BigInt?          @map("file_size_bytes")
+  license       String?          @db.VarChar(100)
+  visibility    AssetVisibility  @default(PUBLIC)
+  accessLevel   AssetAccessLevel @default(OPEN) @map("access_level")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([publicationId])
+  @@index([category])
+  @@map("research_assets")
+}
+
 

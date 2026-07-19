@@ -30,11 +30,12 @@ export type {
 export * from './dto/publication-dtos.js';
 export { ResultHttpMapper } from './responders/result-http-mapper.js';
 
-// Controllers (Sprint 1-4 & Sprint 5 & Sprint 7/8)
+// Controllers (Sprint 1-4 & Sprint 5 & Sprint 7/8/9)
 export { ResearchIdentityController } from './controllers/research-identity.controller.js';
 export { ResearchProfileController } from './controllers/research-profile.controller.js';
 export { PublicationController } from './controllers/publication.controller.js';
 export { ResearchProjectController } from './controllers/research-project.controller.js';
+export { ResearchAssetsController } from './controllers/research-assets.controller.js';
 export { HealthController } from './health/health.controller.js';
 export { AuthenticationController } from './authentication/authentication.controller.js';
 
@@ -53,6 +54,7 @@ export { ApiRouter } from './routes/api-router.js';
 export { createAuthenticationRouter } from './authentication/authentication.routes.js';
 export { createResearchProfileRouter } from './routes/research-profile.routes.js';
 export { createPublicationRouter } from './routes/publication.routes.js';
+export { createResearchAssetsRouter } from './routes/research-assets.routes.js';
 
 // Bootstrap & Server
 export { bootstrapPresentationServer } from './bootstrap/bootstrap-application.js';

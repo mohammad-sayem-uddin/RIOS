@@ -9,6 +9,7 @@ import {
   AuthenticationApplicationService,
   AuthorizationApplicationService,
   PublicationApplicationServiceImpl,
+  ResearchAssetsApplicationServiceImpl,
   ResearchIdentityApplicationServiceImpl,
   SessionApplicationService,
 } from '@rios/application';
@@ -36,6 +37,13 @@ import { PrismaSessionRepository } from '../repositories/identity/prisma-session
 import { PrismaUserRepository } from '../repositories/identity/prisma-user-repository.js';
 import { ResearchIdentityRepositoryImpl } from '../repositories/identity/research-identity-repository.impl.js';
 import { ResearchIdentitySpecificationTranslator } from '../repositories/identity/specification/identity-specification-translator.js';
+import {
+  PrismaExperimentRepository,
+  PrismaRepositoryRepository,
+  PrismaResearchAssetRepository,
+  PrismaResearchDatasetRepository,
+  PrismaSoftwareArtifactRepository,
+} from '../research-assets/index.js';
 import { JwtTokenProvider } from '../security/authentication/jwt-token-provider.js';
 import { GuidGenerator } from '../security/crypto/guid-generator.js';
 import { SecureRandomGenerator } from '../security/crypto/secure-random-generator.js';
@@ -81,96 +89,95 @@ function normalizePrismaInput(input: unknown): unknown {
 }
 
 export function createInMemoryPrismaClient(): PrismaClientInterface {
-  const store = new Map<string, Record<string, unknown>>();
-  const outboxStore = new Map<string, Record<string, unknown>>();
+  const stores = new Map<string, Map<string, Record<string, unknown>>>();
 
-  const client = {
-    $connect: (): Promise<void> => Promise.resolve(),
-    $disconnect: (): Promise<void> => Promise.resolve(),
-    $queryRaw: <T = unknown>(): Promise<T> => Promise.resolve([{ 1: 1 }] as T),
-    $transaction: <R>(fn: (tx: unknown) => Promise<R>): Promise<R> => fn(client),
-    researchIdentity: {
-      findUnique: (args: { where: { id: string } }): Promise<Record<string, unknown> | null> => {
-        return Promise.resolve(store.get(args.where.id) ?? null);
+  const getStore = (modelName: string) => {
+    if (!stores.has(modelName)) {
+      stores.set(modelName, new Map());
+    }
+    return stores.get(modelName)!;
+  };
+
+  const createModelHandler = (modelName: string): Record<string, unknown> => {
+    const s = getStore(modelName);
+    return {
+      findUnique: (args: {
+        where: { id?: string; doi?: string; url?: string };
+      }): Promise<Record<string, unknown> | null> => {
+        if (args.where.id !== undefined && args.where.id !== '')
+          return Promise.resolve(s.get(args.where.id) ?? null);
+        for (const item of s.values()) {
+          if (args.where.doi !== undefined && args.where.doi !== '' && item.doi === args.where.doi)
+            return Promise.resolve(item);
+          if (args.where.url !== undefined && args.where.url !== '' && item.url === args.where.url)
+            return Promise.resolve(item);
+        }
+        return Promise.resolve(null);
+      },
+      findFirst: (): Promise<Record<string, unknown> | null> => {
+        return Promise.resolve(Array.from(s.values())[0] ?? null);
       },
       findMany: (args?: {
-        where?: { id?: string };
-        take?: number;
+        where?: { profileId?: string; publicationId?: string; projectId?: string; OR?: unknown[] };
       }): Promise<Array<Record<string, unknown>>> => {
-        let results = Array.from(store.values());
-        if (args?.where?.id !== undefined) {
-          results = results.filter((r) => r.id === args.where?.id);
-        }
-        if (args?.take !== undefined && args.take > 0) {
-          results = results.slice(0, args.take);
-        }
-        return Promise.resolve(results);
+        let list = Array.from(s.values());
+        if (args?.where?.profileId !== undefined && args.where.profileId !== '')
+          list = list.filter((i) => i.profileId === args.where?.profileId);
+        if (args?.where?.publicationId !== undefined && args.where.publicationId !== '')
+          list = list.filter((i) => i.publicationId === args.where?.publicationId);
+        if (args?.where?.projectId !== undefined && args.where.projectId !== '')
+          list = list.filter((i) => i.projectId === args.where?.projectId);
+        return Promise.resolve(list);
       },
       upsert: (args: {
         where: { id: string };
         create: Record<string, unknown>;
         update: Record<string, unknown>;
       }): Promise<Record<string, unknown>> => {
-        const existing = store.get(args.where.id);
-        const inputToNormalize = existing !== undefined ? args.update : args.create;
+        const id = args.where.id ?? (args.create?.id as string);
+        const existing = s.get(id);
+        const inputToNormalize = existing ? args.update : args.create;
         const normalized = normalizePrismaInput(inputToNormalize) as Record<string, unknown>;
-        const record =
-          existing !== undefined
-            ? { ...existing, ...normalized }
-            : { id: args.where.id, ...normalized };
-        store.set(args.where.id, record);
+        const record = existing ? { ...existing, ...normalized } : { id, ...normalized };
+        s.set(id, record);
+        return Promise.resolve(record);
+      },
+      create: (args: { data: Record<string, unknown> }): Promise<Record<string, unknown>> => {
+        const normalized = normalizePrismaInput(args.data) as Record<string, unknown>;
+        const id = (normalized.id as string) ?? crypto.randomUUID();
+        const record = { id, ...normalized };
+        s.set(id, record);
         return Promise.resolve(record);
       },
       delete: (args: { where: { id: string } }): Promise<Record<string, unknown>> => {
-        const record = store.get(args.where.id) ?? { id: args.where.id };
-        store.delete(args.where.id);
+        const record = s.get(args.where.id) ?? { id: args.where.id };
+        s.delete(args.where.id);
         return Promise.resolve(record);
       },
-    },
-    outbox: {
-      create: (args: { data: Record<string, unknown> }): Promise<Record<string, unknown>> => {
-        const rawId = args.data.id;
-        const id = typeof rawId === 'string' ? rawId : `outbox_${Date.now()}`;
-        outboxStore.set(id, args.data);
-        return Promise.resolve(args.data);
-      },
-      createMany: (args: { data: Array<Record<string, unknown>> }): Promise<{ count: number }> => {
-        for (const item of args.data) {
-          const rawId = item.id;
-          const id = typeof rawId === 'string' ? rawId : `outbox_${Date.now()}_${Math.random()}`;
-          outboxStore.set(id, item);
-        }
-        return Promise.resolve({ count: args.data.length });
-      },
-      findMany: (args?: {
-        where?: { status?: string };
-        take?: number;
-      }): Promise<Array<Record<string, unknown>>> => {
-        let results = Array.from(outboxStore.values());
-        if (args?.where?.status !== undefined) {
-          results = results.filter((r) => r.status === args.where?.status);
-        }
-        if (args?.take !== undefined && args.take > 0) {
-          results = results.slice(0, args.take);
-        }
-        return Promise.resolve(results);
-      },
-      update: (args: {
-        where: { id: string };
-        data: Record<string, unknown>;
-      }): Promise<Record<string, unknown> | null> => {
-        const existing = outboxStore.get(args.where.id);
-        if (existing !== undefined) {
-          const updated = { ...existing, ...args.data };
-          outboxStore.set(args.where.id, updated);
-          return Promise.resolve(updated);
-        }
-        return Promise.resolve(null);
-      },
+    };
+  };
+
+  const client: Record<string, unknown> = {
+    $connect: (): Promise<void> => Promise.resolve(),
+    $disconnect: (): Promise<void> => Promise.resolve(),
+    $queryRaw: <T = unknown>(): Promise<T> => Promise.resolve([{ 1: 1 }] as T),
+    $transaction: <R>(fn: (tx: unknown) => Promise<R>): Promise<R> => fn(client),
+  };
+
+  const clientHandler: ProxyHandler<Record<string, unknown>> = {
+    get(target: Record<string, unknown>, prop: string) {
+      if (prop in target) {
+        return target[prop];
+      }
+      if (typeof prop === 'string' && !prop.startsWith('$')) {
+        target[prop] = createModelHandler(prop);
+        return target[prop];
+      }
+      return undefined;
     },
   };
 
-  return client;
+  return new Proxy(client, clientHandler) as unknown as PrismaClientInterface;
 }
 
 export class CompositionRoot {
@@ -446,6 +453,50 @@ export class CompositionRoot {
           c.resolve(DITokens.PublicationRepository),
           c.resolve(DITokens.ResearchProjectRepository),
           c.resolve(DITokens.VenueRepository),
+        ),
+      Lifetime.SINGLETON,
+    );
+
+    // Sprint 9 Research Assets Repositories & Service
+    this.container.registerFactory(
+      DITokens.ResearchDatasetRepository,
+      (c) => new PrismaResearchDatasetRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.SoftwareArtifactRepository,
+      (c) => new PrismaSoftwareArtifactRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.ResearchAssetRepository,
+      (c) => new PrismaResearchAssetRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.ExperimentRepository,
+      (c) => new PrismaExperimentRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.RepositoryRepository,
+      (c) => new PrismaRepositoryRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.ResearchAssetsApplicationService,
+      (c) =>
+        new ResearchAssetsApplicationServiceImpl(
+          c.resolve(DITokens.ResearchDatasetRepository),
+          c.resolve(DITokens.SoftwareArtifactRepository),
+          c.resolve(DITokens.ResearchAssetRepository),
+          c.resolve(DITokens.ExperimentRepository),
+          c.resolve(DITokens.RepositoryRepository),
         ),
       Lifetime.SINGLETON,
     );

@@ -46,3 +46,6 @@ export * from './research-identity/index.js';
 
 // ─── Publications & Research Projects Domain (Sprint 8) ────────────────
 export * from './publications/index.js';
+
+// ─── Research Assets & Scholarly Resources Domain (Sprint 9) ─────────
+export * from './research-assets/index.js';

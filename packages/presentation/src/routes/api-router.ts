@@ -10,11 +10,14 @@ import type { RequestHandler } from 'express';
 
 import { AuthenticationController } from '../authentication/authentication.controller.js';
 import { createAuthenticationRouter } from '../authentication/authentication.routes.js';
+import type { ResearchAssetsController } from '../controllers/research-assets.controller.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
 import type { HealthController } from '../health/health.controller.js';
 import { SwaggerGenerator } from '../swagger/swagger.generator.js';
 import { SchemaValidator } from '../validation/schema-validator.js';
 import { createValidationMiddleware } from '../validation/validation.middleware.js';
+
+import { createResearchAssetsRouter } from './research-assets.routes.js';
 
 export class ApiRouter {
   public static create(
@@ -23,6 +26,7 @@ export class ApiRouter {
     versionPrefix = '/api/v1',
     authController?: AuthenticationController,
     authMiddleware?: RequestHandler,
+    researchAssetsController?: ResearchAssetsController,
   ): Router {
     const router = Router();
 
@@ -45,6 +49,15 @@ export class ApiRouter {
         authMiddleware,
       });
       router.use(`${versionPrefix}/auth`, authRouter);
+    }
+
+    // ——— Research Assets Sub-Router ———
+    if (researchAssetsController) {
+      const assetsRouter = createResearchAssetsRouter({
+        controller: researchAssetsController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}`, assetsRouter);
     }
 
     // ——— Research Identity Endpoint Schema Validators ———
