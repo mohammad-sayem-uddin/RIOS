@@ -27,10 +27,14 @@ export type {
   LogoutRequestDto,
   CurrentUserResponseDto,
 } from './dto/auth-dtos.js';
+export * from './dto/publication-dtos.js';
 export { ResultHttpMapper } from './responders/result-http-mapper.js';
 
-// Controllers (Sprint 1-4 & Sprint 5)
+// Controllers (Sprint 1-4 & Sprint 5 & Sprint 7/8)
 export { ResearchIdentityController } from './controllers/research-identity.controller.js';
+export { ResearchProfileController } from './controllers/research-profile.controller.js';
+export { PublicationController } from './controllers/publication.controller.js';
+export { ResearchProjectController } from './controllers/research-project.controller.js';
 export { HealthController } from './health/health.controller.js';
 export { AuthenticationController } from './authentication/authentication.controller.js';
 
@@ -47,6 +51,8 @@ export { requireRole, requirePermission } from './authorization/authorization.mi
 // Routes
 export { ApiRouter } from './routes/api-router.js';
 export { createAuthenticationRouter } from './authentication/authentication.routes.js';
+export { createResearchProfileRouter } from './routes/research-profile.routes.js';
+export { createPublicationRouter } from './routes/publication.routes.js';
 
 // Bootstrap & Server
 export { bootstrapPresentationServer } from './bootstrap/bootstrap-application.js';

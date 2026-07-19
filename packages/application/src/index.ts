@@ -43,3 +43,6 @@ export * from './identity/index.js';
 
 // ─── Research Profile Domain (Sprint 7) ────────────────────────────────
 export * from './research-identity/index.js';
+
+// ─── Publications & Research Projects Domain (Sprint 8) ────────────────
+export * from './publications/index.js';

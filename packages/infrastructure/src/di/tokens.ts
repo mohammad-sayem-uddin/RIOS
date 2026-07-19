@@ -45,6 +45,12 @@ export const DITokens = {
   AuthenticationApplicationService: Symbol.for('AuthenticationApplicationService'),
   AuthorizationApplicationService: Symbol.for('AuthorizationApplicationService'),
   SessionApplicationService: Symbol.for('SessionApplicationService'),
+
+  // Sprint 8 Publications & Research Projects Tokens
+  PublicationRepository: Symbol.for('PublicationRepository'),
+  ResearchProjectRepository: Symbol.for('ResearchProjectRepository'),
+  VenueRepository: Symbol.for('VenueRepository'),
+  PublicationApplicationService: Symbol.for('PublicationApplicationService'),
 } as const;
 
 export type DIToken = (typeof DITokens)[keyof typeof DITokens] | string;

@@ -8,6 +8,7 @@
 import {
   AuthenticationApplicationService,
   AuthorizationApplicationService,
+  PublicationApplicationServiceImpl,
   ResearchIdentityApplicationServiceImpl,
   SessionApplicationService,
 } from '@rios/application';
@@ -23,6 +24,9 @@ import type { LogLevelType } from '../logging/logger.js';
 import { StructuredAuditLogger } from '../logging/structured-audit-logger.js';
 import { DefaultLoggerFactory, StructuredLogger } from '../logging/structured-logger.js';
 import { PrismaUnitOfWork } from '../persistence/prisma-unit-of-work.js';
+import { PrismaPublicationRepository } from '../publications/repositories/prisma-publication.repository.js';
+import { PrismaResearchProjectRepository } from '../publications/repositories/prisma-research-project.repository.js';
+import { PrismaVenueRepository } from '../publications/repositories/prisma-venue.repository.js';
 import { ResearchIdentityAggregateMapper } from '../repositories/identity/mappers/research-identity-mapper.js';
 import { PrismaAuditLogRepository } from '../repositories/identity/prisma-audit-log-repository.js';
 import { PrismaPermissionRepository } from '../repositories/identity/prisma-permission-repository.js';
@@ -413,6 +417,36 @@ export class CompositionRoot {
     this.container.registerFactory(
       DITokens.SessionApplicationService,
       (c) => new SessionApplicationService(c.resolve(DITokens.SessionRepository)),
+      Lifetime.SINGLETON,
+    );
+
+    // Sprint 8 Publications & Research Projects Repositories & Services
+    this.container.registerFactory(
+      DITokens.PublicationRepository,
+      (c) => new PrismaPublicationRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.ResearchProjectRepository,
+      (c) => new PrismaResearchProjectRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.VenueRepository,
+      (c) => new PrismaVenueRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.PublicationApplicationService,
+      (c) =>
+        new PublicationApplicationServiceImpl(
+          c.resolve(DITokens.PublicationRepository),
+          c.resolve(DITokens.ResearchProjectRepository),
+          c.resolve(DITokens.VenueRepository),
+        ),
       Lifetime.SINGLETON,
     );
 

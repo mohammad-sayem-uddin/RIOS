@@ -183,6 +183,8 @@ model ResearchProfile {
   skills           Skill[]
   externalProfiles ExternalProfile[]
   portfolioAssets  PortfolioAsset[]
+  publications     Publication[]
+  researchProjects ResearchProject[]
 
   @@index([userId])
   @@map("research_profiles")
@@ -287,3 +289,191 @@ model PortfolioAsset {
   @@index([profileId])
   @@map("portfolio_assets")
 }
+
+// ─── Sprint 8 — Publications & Research Projects Models ─────────────────────
+
+enum PublicationType {
+  JOURNAL_ARTICLE
+  CONFERENCE_PAPER
+  BOOK
+  BOOK_CHAPTER
+  THESIS
+  TECHNICAL_REPORT
+  PREPRINT
+}
+
+enum PublicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  PUBLISHED
+  PREPRINT
+}
+
+enum ProjectRole {
+  PRINCIPAL_INVESTIGATOR
+  CO_INVESTIGATOR
+  RESEARCHER
+  POSTDOC
+  STUDENT_RESEARCHER
+  COLLABORATOR
+}
+
+enum VenueType {
+  JOURNAL
+  CONFERENCE
+  OTHER
+}
+
+model Publisher {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(255)
+  location   String?  @db.VarChar(255)
+  websiteUrl String?  @map("website_url") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  venues       Venue[]
+  publications Publication[]
+
+  @@map("publishers")
+}
+
+model Venue {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(255)
+  venueType   VenueType @map("venue_type")
+  issn        String?   @db.VarChar(50)
+  isbn        String?   @db.VarChar(50)
+  publisherId String?   @map("publisher_id") @db.Uuid
+  url         String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  publisher    Publisher?    @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  publications Publication[]
+
+  @@index([name])
+  @@map("venues")
+}
+
+model Publication {
+  id            String            @id @default(uuid()) @db.Uuid
+  profileId     String            @map("profile_id") @db.Uuid
+  title         String            @db.VarChar(500)
+  type          PublicationType
+  status        PublicationStatus @default(DRAFT)
+  doi           String?           @unique @db.VarChar(255)
+  isbn          String?           @db.VarChar(50)
+  abstract      String?           @db.Text
+  keywords      String?           @db.Text
+  year          Int?
+  citationCount Int               @default(0) @map("citation_count")
+  url           String?           @db.Text
+  language      String?           @db.VarChar(50)
+  venueId       String?           @map("venue_id") @db.Uuid
+  publisherId   String?           @map("publisher_id") @db.Uuid
+  submittedDate DateTime?         @map("submitted_date") @db.Timestamptz
+  acceptedDate  DateTime?         @map("accepted_date") @db.Timestamptz
+  publishedDate DateTime?         @map("published_date") @db.Timestamptz
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile   ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  venue     Venue?          @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  publisher Publisher?      @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  authors   Author[]
+  fundings  Funding[]
+
+  @@index([profileId])
+  @@index([title])
+  @@index([doi])
+  @@index([status])
+  @@map("publications")
+}
+
+model Author {
+  id              String   @id @default(uuid()) @db.Uuid
+  publicationId   String   @map("publication_id") @db.Uuid
+  name            String   @db.VarChar(255)
+  email           String?  @db.VarChar(255)
+  orcid           String?  @db.VarChar(50)
+  authorOrder     Int      @map("author_order")
+  isCorresponding Boolean  @default(false) @map("is_corresponding")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  publication  Publication           @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  affiliations AffiliationSnapshot[]
+
+  @@index([publicationId])
+  @@map("authors")
+}
+
+model AffiliationSnapshot {
+  id          String   @id @default(uuid()) @db.Uuid
+  authorId    String   @map("author_id") @db.Uuid
+  institution String   @db.VarChar(255)
+  department  String?  @db.VarChar(255)
+  location    String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  author Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("affiliation_snapshots")
+}
+
+model Funding {
+  id                String   @id @default(uuid()) @db.Uuid
+  publicationId     String   @map("publication_id") @db.Uuid
+  funderName        String   @map("funder_name") @db.VarChar(255)
+  fundingIdentifier String?  @map("funding_identifier") @db.VarChar(100)
+  grantTitle        String?  @map("grant_title") @db.VarChar(255)
+  amountCurrency    String?  @map("amount_currency") @db.VarChar(10)
+  amountValue       Float?   @map("amount_value")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId])
+  @@map("fundings")
+}
+
+model ResearchProject {
+  id              String        @id @default(uuid()) @db.Uuid
+  profileId       String        @map("profile_id") @db.Uuid
+  title           String        @db.VarChar(255)
+  description     String        @db.Text
+  status          String        @default("ACTIVE") @db.VarChar(50)
+  startDate       DateTime      @map("start_date") @db.Timestamptz
+  endDate         DateTime?     @map("end_date") @db.Timestamptz
+  grantIdentifier String?       @map("grant_identifier") @db.VarChar(100)
+  fundingAgency   String?       @map("funding_agency") @db.VarChar(255)
+  budget          Float?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  members ProjectMember[]
+
+  @@index([profileId])
+  @@map("research_projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid()) @db.Uuid
+  projectId String      @map("project_id") @db.Uuid
+  profileId String?     @map("profile_id") @db.Uuid
+  name      String      @db.VarChar(255)
+  role      ProjectRole
+  startDate DateTime    @map("start_date") @db.Timestamptz
+  endDate   DateTime?   @map("end_date") @db.Timestamptz
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_members")
+}
+

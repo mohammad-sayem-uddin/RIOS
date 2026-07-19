@@ -81,6 +81,9 @@ export {
 // Research Identity Infrastructure (Sprint 7)
 export * from './research-identity/index.js';
 
+// Publications Infrastructure (Sprint 8)
+export * from './publications/index.js';
+
 // DI Container & Composition Root
 export { Container, Lifetime } from './di/container.js';
 export { CompositionRoot, createInMemoryPrismaClient } from './di/composition-root.js';
