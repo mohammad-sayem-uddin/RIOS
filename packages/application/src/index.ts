@@ -49,3 +49,6 @@ export * from './publications/index.js';
 
 // ─── Research Assets & Scholarly Resources Domain (Sprint 9) ─────────
 export * from './research-assets/index.js';
+
+// ─── Academic Recognition Domain (Sprint 10) ──────────────────────────
+export * from './academic-recognition/index.js';

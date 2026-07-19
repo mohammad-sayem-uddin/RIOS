@@ -189,6 +189,10 @@ model ResearchProfile {
   softwareArtifacts SoftwareArtifact[]
   researchAssets   ResearchAsset[]
   experiments      Experiment[]
+  academicAwards   AcademicAward[]
+  academicGrants   AcademicGrant[]
+  academicPatents  AcademicPatent[]
+  professionalActivities ProfessionalActivity[]
 
   @@index([userId])
   @@map("research_profiles")
@@ -661,5 +665,100 @@ model ResearchAsset {
   @@index([category])
   @@map("research_assets")
 }
+
+// ─── Sprint 10 Academic Recognition Models ────────────────────────────
+
+model AcademicAward {
+  id              String   @id @default(uuid()) @db.Uuid
+  profileId       String   @map("profile_id") @db.Uuid
+  title           String   @db.VarChar(255)
+  category        String   @db.VarChar(100)
+  sponsorOrAgency String?  @map("sponsor_or_agency") @db.VarChar(255)
+  amount          Decimal? @db.Decimal(15, 2)
+  currency        String?  @default("USD") @db.VarChar(10)
+  awardDate       DateTime @map("award_date") @db.Timestamptz
+  description     String?  @db.Text
+  field           String?  @db.VarChar(100)
+  area            String?  @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([title])
+  @@map("academic_awards")
+}
+
+model AcademicGrant {
+  id                      String   @id @default(uuid()) @db.Uuid
+  profileId               String   @map("profile_id") @db.Uuid
+  grantNumber             String   @unique @map("grant_number") @db.VarChar(100)
+  title                   String   @db.VarChar(255)
+  fundingAgency           String   @map("funding_agency") @db.VarChar(255)
+  amount                  Decimal  @db.Decimal(15, 2)
+  currency                String   @default("USD") @db.VarChar(10)
+  startDate               DateTime @map("start_date") @db.Timestamptz
+  endDate                 DateTime @map("end_date") @db.Timestamptz
+  status                  String   @default("ACTIVE") @db.VarChar(50)
+  principalInvestigatorId String?  @map("principal_investigator_id") @db.VarChar(255)
+  coInvestigators         String?  @map("co_investigators") @db.Text
+  description             String?  @db.Text
+  deliverables            String?  @db.Text
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([grantNumber])
+  @@map("academic_grants")
+}
+
+model AcademicPatent {
+  id                   String    @id @default(uuid()) @db.Uuid
+  profileId            String    @map("profile_id") @db.Uuid
+  patentNumber         String    @unique @map("patent_number") @db.VarChar(100)
+  title                String    @db.VarChar(255)
+  status               String    @default("APPLIED") @db.VarChar(50)
+  patentType           String    @default("UTILITY") @map("patent_type") @db.VarChar(50)
+  filingDate           DateTime  @map("filing_date") @db.Timestamptz
+  grantDate            DateTime? @map("grant_date") @db.Timestamptz
+  assigneeOrganization String?   @map("assignee_organization") @db.VarChar(255)
+  inventors            String?   @db.Text
+  abstract             String?   @db.Text
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([patentNumber])
+  @@map("academic_patents")
+}
+
+model ProfessionalActivity {
+  id             String    @id @default(uuid()) @db.Uuid
+  profileId      String    @map("profile_id") @db.Uuid
+  category       String    @db.VarChar(100)
+  title          String    @db.VarChar(255)
+  organization   String?   @db.VarChar(255)
+  role           String?   @db.VarChar(100)
+  startDate      DateTime? @map("start_date") @db.Timestamptz
+  endDate        DateTime? @map("end_date") @db.Timestamptz
+  conferenceName String?   @map("conference_name") @db.VarChar(255)
+  journalName    String?   @map("journal_name") @db.VarChar(255)
+  country        String?   @db.VarChar(10)
+  description    String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile ResearchProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([category])
+  @@map("professional_activities")
+}
+
 
 

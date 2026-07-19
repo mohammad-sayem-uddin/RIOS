@@ -6,6 +6,7 @@
  */
 
 import {
+  AcademicRecognitionApplicationServiceImpl,
   AuthenticationApplicationService,
   AuthorizationApplicationService,
   PublicationApplicationServiceImpl,
@@ -15,6 +16,12 @@ import {
 } from '@rios/application';
 import { Result } from '@rios/shared';
 
+import {
+  PrismaAwardRepository,
+  PrismaGrantRepository,
+  PrismaPatentRepository,
+  PrismaProfessionalActivityRepository,
+} from '../academic-recognition/index.js';
 import type { AppConfig } from '../configuration/app-config.js';
 import { EnvConfigurationLoader } from '../configuration/env-configuration-loader.js';
 import type { PrismaClientInterface } from '../database/prisma-database-provider.js';
@@ -497,6 +504,43 @@ export class CompositionRoot {
           c.resolve(DITokens.ResearchAssetRepository),
           c.resolve(DITokens.ExperimentRepository),
           c.resolve(DITokens.RepositoryRepository),
+        ),
+      Lifetime.SINGLETON,
+    );
+
+    // Sprint 10 Academic Recognition Repositories & Service
+    this.container.registerFactory(
+      DITokens.AwardRepository,
+      (c) => new PrismaAwardRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.GrantRepository,
+      (c) => new PrismaGrantRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.PatentRepository,
+      (c) => new PrismaPatentRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.ProfessionalActivityRepository,
+      (c) => new PrismaProfessionalActivityRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.AcademicRecognitionApplicationService,
+      (c) =>
+        new AcademicRecognitionApplicationServiceImpl(
+          c.resolve(DITokens.AwardRepository),
+          c.resolve(DITokens.GrantRepository),
+          c.resolve(DITokens.PatentRepository),
+          c.resolve(DITokens.ProfessionalActivityRepository),
         ),
       Lifetime.SINGLETON,
     );

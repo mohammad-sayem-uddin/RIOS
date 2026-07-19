@@ -59,6 +59,13 @@ export const DITokens = {
   ExperimentRepository: Symbol.for('ExperimentRepository'),
   RepositoryRepository: Symbol.for('RepositoryRepository'),
   ResearchAssetsApplicationService: Symbol.for('ResearchAssetsApplicationService'),
+
+  // Sprint 10 Academic Recognition Tokens
+  AwardRepository: Symbol.for('AwardRepository'),
+  GrantRepository: Symbol.for('GrantRepository'),
+  PatentRepository: Symbol.for('PatentRepository'),
+  ProfessionalActivityRepository: Symbol.for('ProfessionalActivityRepository'),
+  AcademicRecognitionApplicationService: Symbol.for('AcademicRecognitionApplicationService'),
 } as const;
 
 export type DIToken = (typeof DITokens)[keyof typeof DITokens] | string;
