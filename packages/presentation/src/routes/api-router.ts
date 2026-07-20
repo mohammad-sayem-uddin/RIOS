@@ -12,6 +12,7 @@ import { AuthenticationController } from '../authentication/authentication.contr
 import { createAuthenticationRouter } from '../authentication/authentication.routes.js';
 import type { AcademicRecognitionController } from '../controllers/academic-recognition.controller.js';
 import type { AiIntelligenceController } from '../controllers/ai-intelligence.controller.js';
+import type { EnterpriseController } from '../controllers/enterprise.controller.js';
 import type { ResearchAssetsController } from '../controllers/research-assets.controller.js';
 import type { ResearchDiscoveryController } from '../controllers/research-discovery.controller.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
@@ -23,6 +24,7 @@ import { createValidationMiddleware } from '../validation/validation.middleware.
 
 import { createAcademicRecognitionRouter } from './academic-recognition.routes.js';
 import { createAiIntelligenceRouter } from './ai-intelligence.routes.js';
+import { createEnterpriseRouter } from './enterprise.routes.js';
 import { createResearchAssetsRouter } from './research-assets.routes.js';
 import { createResearchDiscoveryRouter } from './research-discovery.routes.js';
 import { createResearchIntelligenceRouter } from './research-intelligence.routes.js';
@@ -39,6 +41,7 @@ export class ApiRouter {
     researchIntelligenceController?: ResearchIntelligenceController,
     researchDiscoveryController?: ResearchDiscoveryController,
     aiIntelligenceController?: AiIntelligenceController,
+    enterpriseController?: EnterpriseController,
   ): Router {
     const router = Router();
 
@@ -61,6 +64,15 @@ export class ApiRouter {
         authMiddleware,
       });
       router.use(`${versionPrefix}/auth`, authRouter);
+    }
+
+    // ——— Enterprise Sub-Router ———
+    if (enterpriseController) {
+      const enterpriseRouter = createEnterpriseRouter({
+        controller: enterpriseController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}`, enterpriseRouter);
     }
 
     // ——— Research Assets Sub-Router ———

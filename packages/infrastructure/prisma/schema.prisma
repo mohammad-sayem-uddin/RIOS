@@ -1267,6 +1267,123 @@ model ResearchGapModel {
   @@map("research_gaps")
 }
 
+// ─── Sprint 14 Enterprise Platform Models ───────────────────────────────────
+
+model NotificationModel {
+  id           String    @id @default(uuid()) @db.Uuid
+  recipientId  String    @map("recipient_id") @db.VarChar(255)
+  type         String    @db.VarChar(100)
+  channel      String    @db.VarChar(50)
+  subject      String?   @db.VarChar(255)
+  message      String    @db.Text
+  status       String    @default("QUEUED") @db.VarChar(50)
+  retryCount   Int       @default(0) @map("retry_count")
+  maxRetries   Int       @default(3) @map("max_retries")
+  metadataJson String?   @map("metadata_json") @db.Text
+  queuedAt     DateTime  @default(now()) @map("queued_at") @db.Timestamptz
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz
+  failedAt     DateTime? @map("failed_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([recipientId])
+  @@index([status])
+  @@map("notifications")
+}
+
+model BackgroundJobModel {
+  id           String   @id @default(uuid()) @db.Uuid
+  jobType      String   @map("job_type") @db.VarChar(100)
+  payloadJson  String   @map("payload_json") @db.Text
+  status       String   @default("SCHEDULED") @db.VarChar(50)
+  priority     Int      @default(0)
+  retryCount   Int      @default(0) @map("retry_count")
+  maxRetries   Int      @default(3) @map("max_retries")
+  scheduledAt  DateTime @default(now()) @map("scheduled_at") @db.Timestamptz
+  startedAt    DateTime? @map("started_at") @db.Timestamptz
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+  failedAt     DateTime? @map("failed_at") @db.Timestamptz
+  errorMessage String?  @map("error_message") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  executions JobExecutionModel[]
+
+  @@index([jobType])
+  @@index([status])
+  @@map("background_jobs")
+}
+
+model JobExecutionModel {
+  id           String   @id @default(uuid()) @db.Uuid
+  jobId        String   @map("job_id") @db.Uuid
+  status       String   @db.VarChar(50)
+  durationMs   Int      @map("duration_ms")
+  errorDetails String?  @map("error_details") @db.Text
+  executedAt   DateTime @default(now()) @map("executed_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  job BackgroundJobModel @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("job_executions")
+}
+
+model WebhookModel {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(255)
+  url             String    @db.Text
+  secret          String    @db.VarChar(255)
+  eventTypes      String    @map("event_types") @db.Text
+  isActive        Boolean   @default(true) @map("is_active")
+  lastTriggeredAt DateTime? @map("last_triggered_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("webhooks")
+}
+
+model FeatureFlagModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(150)
+  description String?  @db.Text
+  isEnabled   Boolean  @default(false) @map("is_enabled")
+  rulesJson   String?  @map("rules_json") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([name])
+  @@map("feature_flags")
+}
+
+model ConfigurationItemModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique @db.VarChar(255)
+  value       String   @db.Text
+  scope       String   @default("GLOBAL") @db.VarChar(50)
+  isEncrypted Boolean  @default(false) @map("is_encrypted")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([key])
+  @@map("configuration_items")
+}
+
+model SystemMetricModel {
+  id         String   @id @default(uuid()) @db.Uuid
+  metricName String   @map("metric_name") @db.VarChar(150)
+  metricType String   @map("metric_type") @db.VarChar(50)
+  value      Float
+  unit       String?  @db.VarChar(50)
+  tagsJson   String?  @map("tags_json") @db.Text
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Timestamptz
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([metricName])
+  @@map("system_metrics")
+}
+
+
 
 
 

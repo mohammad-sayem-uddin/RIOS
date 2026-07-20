@@ -39,6 +39,7 @@ export { ResearchProjectController } from './controllers/research-project.contro
 export { ResearchAssetsController } from './controllers/research-assets.controller.js';
 export { AcademicRecognitionController } from './controllers/academic-recognition.controller.js';
 export { AiIntelligenceController } from './controllers/ai-intelligence.controller.js';
+export { EnterpriseController } from './controllers/enterprise.controller.js';
 export { HealthController } from './health/health.controller.js';
 export { AuthenticationController } from './authentication/authentication.controller.js';
 
@@ -60,6 +61,7 @@ export { createPublicationRouter } from './routes/publication.routes.js';
 export { createResearchAssetsRouter } from './routes/research-assets.routes.js';
 export { createAcademicRecognitionRouter } from './routes/academic-recognition.routes.js';
 export { createAiIntelligenceRouter } from './routes/ai-intelligence.routes.js';
+export { createEnterpriseRouter } from './routes/enterprise.routes.js';
 
 // Bootstrap & Server
 export { bootstrapPresentationServer } from './bootstrap/bootstrap-application.js';

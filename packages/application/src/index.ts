@@ -61,3 +61,6 @@ export * from './research-discovery/index.js';
 
 // ─── AI Research Intelligence Domain (Sprint 13) ──────────────────────
 export * from './ai-intelligence/index.js';
+
+// ─── Enterprise Platform Domain (Sprint 14) ───────────────────────────
+export * from './enterprise/index.js';

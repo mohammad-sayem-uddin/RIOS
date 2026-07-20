@@ -77,6 +77,23 @@ export const DITokens = {
   KnowledgeGraphAdapter: Symbol.for('KnowledgeGraphAdapter'),
   BackgroundJobProcessor: Symbol.for('BackgroundJobProcessor'),
   AiIntelligenceApplicationService: Symbol.for('AiIntelligenceApplicationService'),
+
+  // Sprint 14 Enterprise Platform Tokens
+  NotificationRepository: Symbol.for('NotificationRepository'),
+  AuditRepository: Symbol.for('AuditRepository'),
+  JobRepository: Symbol.for('JobRepository'),
+  ConfigurationRepository: Symbol.for('ConfigurationRepository'),
+  NotificationProvider: Symbol.for('NotificationProvider'),
+  EmailProvider: Symbol.for('EmailProvider'),
+  WebhookProvider: Symbol.for('WebhookProvider'),
+  CacheProvider: Symbol.for('CacheProvider'),
+  JobQueueProvider: Symbol.for('JobQueueProvider'),
+  ObjectStorageProvider: Symbol.for('ObjectStorageProvider'),
+  MetricsProvider: Symbol.for('MetricsProvider'),
+  TracingProvider: Symbol.for('TracingProvider'),
+  ConfigurationProvider: Symbol.for('ConfigurationProvider'),
+  HealthCheckProvider: Symbol.for('HealthCheckProvider'),
+  EnterpriseApplicationService: Symbol.for('EnterpriseApplicationService'),
 } as const;
 
 export type DIToken = (typeof DITokens)[keyof typeof DITokens] | string;

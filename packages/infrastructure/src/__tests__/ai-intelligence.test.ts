@@ -27,7 +27,9 @@ describe('AI Research Intelligence Infrastructure Layer (Sprint 13)', () => {
   it('should perform vector search in Vector Store Adapter', async () => {
     const store = new DefaultVectorStoreAdapter();
     const vec1: number[] = new Array<number>(1536).fill(0.1);
-    const vec2: number[] = new Array<number>(1536).fill(0.9);
+    const vec2: number[] = new Array<number>(1536)
+      .fill(0)
+      .map((_, i) => (i % 2 === 0 ? 0.9 : -0.9));
 
     await store.upsertVector('e1', vec1, { entityId: 'e1', entityType: 'PUBLICATION' });
     await store.upsertVector('e2', vec2, { entityId: 'e2', entityType: 'PUBLICATION' });
