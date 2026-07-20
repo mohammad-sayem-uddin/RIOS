@@ -98,7 +98,7 @@ function normalizePrismaInput(input: unknown): unknown {
 export function createInMemoryPrismaClient(): PrismaClientInterface {
   const stores = new Map<string, Map<string, Record<string, unknown>>>();
 
-  const getStore = (modelName: string) => {
+  const getStore = (modelName: string): Map<string, Record<string, unknown>> => {
     if (!stores.has(modelName)) {
       stores.set(modelName, new Map());
     }

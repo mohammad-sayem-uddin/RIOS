@@ -25,7 +25,6 @@ describe('Research Assets Infrastructure Integration Tests', () => {
       area: 'Atmospheric Physics',
     });
 
-    if (createRes.isFailure) console.error('createDataset error:', createRes.error);
     expect(createRes.isSuccess).toBe(true);
     const dataset = createRes.value;
     expect(dataset.title).toBe('Global Climate Change Dataset 2026');
@@ -42,7 +41,6 @@ describe('Research Assets Infrastructure Integration Tests', () => {
       provider: 'GITHUB',
     });
 
-    if (repoRes.isFailure) console.error('createRepository error:', repoRes.error);
     expect(repoRes.isSuccess).toBe(true);
     const repo = repoRes.value;
     expect(repo.name).toBe('rios-research-assets');
@@ -56,7 +54,6 @@ describe('Research Assets Infrastructure Integration Tests', () => {
       repositoryId: repo.id,
     });
 
-    if (softwareRes.isFailure) console.error('createSoftwareArtifact error:', softwareRes.error);
     expect(softwareRes.isSuccess).toBe(true);
     expect(softwareRes.value.repositories.length).toBe(1);
   });
@@ -71,7 +68,6 @@ describe('Research Assets Infrastructure Integration Tests', () => {
       license: 'CC-BY-4.0',
     });
 
-    if (uploadRes.isFailure) console.error('uploadResearchAsset error:', uploadRes.error);
     expect(uploadRes.isSuccess).toBe(true);
     expect(uploadRes.value.category).toBe('PRESENTATION');
 

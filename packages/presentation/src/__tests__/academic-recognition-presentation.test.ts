@@ -11,7 +11,7 @@ import type {
   UpdatePatentStatusDto,
 } from '@rios/application';
 import { Result } from '@rios/shared';
-import express from 'express';
+import express, { json } from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
@@ -306,7 +306,7 @@ describe('Academic Recognition Presentation REST API Tests', () => {
   const router = createAcademicRecognitionRouter({ controller });
 
   const app = express();
-  app.use(express.json());
+  app.use(json());
   app.use('/api/v1', router);
 
   it('POST /api/v1/awards should create award (201)', async () => {

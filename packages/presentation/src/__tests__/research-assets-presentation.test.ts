@@ -1,6 +1,6 @@
 import type { ResearchAssetsApplicationService } from '@rios/application';
 import { CompositionRoot, DITokens } from '@rios/infrastructure';
-import express from 'express';
+import express, { json } from 'express';
 import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
 
@@ -16,7 +16,7 @@ describe('Research Assets Presentation Layer Tests', () => {
   const router = createResearchAssetsRouter({ controller });
 
   const app = express();
-  app.use(express.json());
+  app.use(json());
   app.use('/api/v1', router);
 
   it('should create a research dataset via POST /api/v1/datasets', async () => {

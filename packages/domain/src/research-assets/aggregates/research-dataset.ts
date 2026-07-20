@@ -178,7 +178,7 @@ export class ResearchDataset extends AggregateRoot<ResearchDatasetProps> {
     // Check version sequence invariant
     if (this.props.versions.length > 0) {
       const latest = this.props.versions[this.props.versions.length - 1];
-      if (latest && !newVersion.versionNumber.isGreaterThan(latest.versionNumber)) {
+      if (latest !== undefined && !newVersion.versionNumber.isGreaterThan(latest.versionNumber)) {
         return Result.fail<void>(
           new InvalidVersionSequenceError(
             latest.versionNumber.value,
