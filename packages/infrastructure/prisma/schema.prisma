@@ -969,6 +969,167 @@ model ResearchTrendModel {
   @@map("research_trends")
 }
 
+// ─── Sprint 12 Discovery & Search Platform Models ──────────────────────────────
+
+model PublicResearchProfileModel {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @map("user_id") @db.Uuid
+  slug                String   @unique @db.VarChar(255)
+  title               String   @db.VarChar(255)
+  headline            String?  @db.VarChar(255)
+  biography           String?  @db.Text
+  institution         String?  @db.VarChar(255)
+  researchAreas       String?  @map("research_areas") @db.Text
+  visibility          String   @default("PUBLIC") @db.VarChar(50)
+  isPublished         Boolean  @default(true) @map("is_published")
+  featuredPortfolioId String?  @map("featured_portfolio_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  portfolios ResearchPortfolioModel[]
+
+  @@index([userId])
+  @@index([slug])
+  @@index([visibility])
+  @@map("public_research_profiles")
+}
+
+model SearchIndexModel {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @unique @db.VarChar(100)
+  documentCount Int      @default(0) @map("document_count")
+  lastIndexedAt DateTime @default(now()) @map("last_indexed_at") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  documents SearchDocumentModel[]
+
+  @@map("search_indices")
+}
+
+model SearchDocumentModel {
+  id           String   @id @default(uuid()) @db.Uuid
+  indexId      String?  @map("index_id") @db.Uuid
+  documentType String   @map("document_type") @db.VarChar(50)
+  entityId     String   @map("entity_id") @db.VarChar(255)
+  title        String   @db.VarChar(500)
+  description  String?  @db.Text
+  keywords     String?  @db.Text
+  category     String?  @db.VarChar(100)
+  institution  String?  @db.VarChar(255)
+  authorName   String?  @map("author_name") @db.VarChar(255)
+  visibility   String   @default("PUBLIC") @db.VarChar(50)
+  metadataJson String?  @map("metadata_json") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  index SearchIndexModel? @relation(fields: [indexId], references: [id], onDelete: Cascade)
+
+  @@index([documentType, entityId])
+  @@index([title])
+  @@index([visibility])
+  @@map("search_documents")
+}
+
+model DiscoveryCatalogModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  institutions     InstitutionProfileModel[]
+  keywordClusters  KeywordClusterModel[]
+  categories       ResearchCategoryModel[]
+  trendingResearch TrendingResearchModel[]
+
+  @@map("discovery_catalogs")
+}
+
+model ResearchPortfolioModel {
+  id                     String   @id @default(uuid()) @db.Uuid
+  profileId              String   @map("profile_id") @db.Uuid
+  slug                   String   @unique @db.VarChar(255)
+  title                  String   @db.VarChar(255)
+  summary                String?  @db.Text
+  featuredPublicationIds String?  @map("featured_publication_ids") @db.Text
+  featuredProjectIds     String?  @map("featured_project_ids") @db.Text
+  featuredDatasetIds     String?  @map("featured_dataset_ids") @db.Text
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile PublicResearchProfileModel @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([slug])
+  @@map("research_portfolios")
+}
+
+model InstitutionProfileModel {
+  id              String   @id @default(uuid()) @db.Uuid
+  catalogId       String?  @map("catalog_id") @db.Uuid
+  name            String   @db.VarChar(255)
+  normalizedName  String   @unique @map("normalized_name") @db.VarChar(255)
+  country         String?  @db.VarChar(100)
+  departmentCount Int      @default(0) @map("department_count")
+  researcherCount Int      @default(0) @map("researcher_count")
+  websiteUrl      String?  @map("website_url") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  catalog DiscoveryCatalogModel? @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([normalizedName])
+  @@map("institution_profiles")
+}
+
+model KeywordClusterModel {
+  id              String   @id @default(uuid()) @db.Uuid
+  catalogId       String?  @map("catalog_id") @db.Uuid
+  keyword         String   @unique @db.VarChar(150)
+  popularityScore Float    @default(0.0) @map("popularity_score")
+  relatedKeywords String?  @map("related_keywords") @db.Text
+  category        String?  @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  catalog DiscoveryCatalogModel? @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([keyword])
+  @@map("keyword_clusters")
+}
+
+model ResearchCategoryModel {
+  id               String   @id @default(uuid()) @db.Uuid
+  catalogId        String?  @map("catalog_id") @db.Uuid
+  name             String   @db.VarChar(150)
+  slug             String   @unique @db.VarChar(150)
+  description      String?  @db.Text
+  parentCategoryId String?  @map("parent_category_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  catalog DiscoveryCatalogModel? @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@map("research_categories")
+}
+
+model TrendingResearchModel {
+  id            String   @id @default(uuid()) @db.Uuid
+  catalogId     String?  @map("catalog_id") @db.Uuid
+  entityId      String   @map("entity_id") @db.VarChar(255)
+  documentType  String   @map("document_type") @db.VarChar(50)
+  title         String   @db.VarChar(255)
+  viewCount     Int      @default(0) @map("view_count")
+  citationCount Int      @default(0) @map("citation_count")
+  trendingScore Float    @default(0.0) @map("trending_score")
+  period        String   @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  catalog DiscoveryCatalogModel? @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([entityId])
+  @@map("trending_research")
+}
+
+
 
 
 

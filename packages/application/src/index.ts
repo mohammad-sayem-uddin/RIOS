@@ -55,3 +55,6 @@ export * from './academic-recognition/index.js';
 
 // ─── Research Intelligence Domain (Sprint 11) ─────────────────────────
 export * from './research-intelligence/index.js';
+
+// ─── Research Discovery Domain (Sprint 12) ────────────────────────────
+export * from './research-discovery/index.js';

@@ -8,4 +8,5 @@ export { PublicationController } from './publication.controller.js';
 export { ResearchProjectController } from './research-project.controller.js';
 export { AcademicRecognitionController } from './academic-recognition.controller.js';
 export { ResearchIntelligenceController } from './research-intelligence.controller.js';
+export { ResearchDiscoveryController } from './research-discovery.controller.js';
 export { HealthController } from '../health/health.controller.js';

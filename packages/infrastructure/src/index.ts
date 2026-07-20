@@ -93,6 +93,9 @@ export * from './academic-recognition/index.js';
 // Research Intelligence Infrastructure (Sprint 11)
 export * from './research-intelligence/index.js';
 
+// Research Discovery Infrastructure (Sprint 12)
+export * from './research-discovery/index.js';
+
 // DI Container & Composition Root
 export { Container, Lifetime } from './di/container.js';
 export { CompositionRoot, createInMemoryPrismaClient } from './di/composition-root.js';

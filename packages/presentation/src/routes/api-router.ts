@@ -12,6 +12,7 @@ import { AuthenticationController } from '../authentication/authentication.contr
 import { createAuthenticationRouter } from '../authentication/authentication.routes.js';
 import type { AcademicRecognitionController } from '../controllers/academic-recognition.controller.js';
 import type { ResearchAssetsController } from '../controllers/research-assets.controller.js';
+import type { ResearchDiscoveryController } from '../controllers/research-discovery.controller.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
 import type { ResearchIntelligenceController } from '../controllers/research-intelligence.controller.js';
 import type { HealthController } from '../health/health.controller.js';
@@ -21,6 +22,7 @@ import { createValidationMiddleware } from '../validation/validation.middleware.
 
 import { createAcademicRecognitionRouter } from './academic-recognition.routes.js';
 import { createResearchAssetsRouter } from './research-assets.routes.js';
+import { createResearchDiscoveryRouter } from './research-discovery.routes.js';
 import { createResearchIntelligenceRouter } from './research-intelligence.routes.js';
 
 export class ApiRouter {
@@ -33,6 +35,7 @@ export class ApiRouter {
     researchAssetsController?: ResearchAssetsController,
     academicRecognitionController?: AcademicRecognitionController,
     researchIntelligenceController?: ResearchIntelligenceController,
+    researchDiscoveryController?: ResearchDiscoveryController,
   ): Router {
     const router = Router();
 
@@ -82,6 +85,15 @@ export class ApiRouter {
         authMiddleware,
       });
       router.use(`${versionPrefix}`, intelligenceRouter);
+    }
+
+    // ——— Research Discovery Sub-Router ———
+    if (researchDiscoveryController) {
+      const discoveryRouter = createResearchDiscoveryRouter({
+        controller: researchDiscoveryController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}`, discoveryRouter);
     }
 
     // ——— Research Identity Endpoint Schema Validators ———
