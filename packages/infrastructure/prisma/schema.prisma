@@ -1129,6 +1129,145 @@ model TrendingResearchModel {
   @@map("trending_research")
 }
 
+// ─── Sprint 13 AI Research Intelligence & Knowledge Graph Models ──────────────
+
+model ResearchEmbeddingModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  entityId    String   @map("entity_id") @db.VarChar(255)
+  entityType  String   @map("entity_type") @db.VarChar(100)
+  model       String   @db.VarChar(100)
+  dimension   Int
+  status      String   @default("ACTIVE") @db.VarChar(50)
+  sourceHash  String?  @map("source_hash") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  vectors EmbeddingVectorModel[]
+
+  @@index([entityId, entityType])
+  @@map("research_embeddings")
+}
+
+model EmbeddingVectorModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  embeddingId String   @map("embedding_id") @db.Uuid
+  vectorJson  String   @map("vector_json") @db.Text
+  dimension   Int
+  model       String   @db.VarChar(100)
+  norm        Float?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  embedding ResearchEmbeddingModel @relation(fields: [embeddingId], references: [id], onDelete: Cascade)
+
+  @@index([embeddingId])
+  @@map("embedding_vectors")
+}
+
+model KnowledgeGraphModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  nodes ResearchNodeModel[]
+  edges ResearchEdgeModel[]
+
+  @@index([profileId])
+  @@map("knowledge_graphs")
+}
+
+model ResearchNodeModel {
+  id            String   @id @default(uuid()) @db.Uuid
+  graphId       String   @map("graph_id") @db.Uuid
+  nodeType      String   @map("node_type") @db.VarChar(50)
+  entityId      String   @map("entity_id") @db.VarChar(255)
+  label         String   @db.VarChar(255)
+  attributesJson String? @map("attributes_json") @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  graph KnowledgeGraphModel @relation(fields: [graphId], references: [id], onDelete: Cascade)
+
+  @@index([graphId])
+  @@index([entityId])
+  @@map("research_nodes")
+}
+
+model ResearchEdgeModel {
+  id               String   @id @default(uuid()) @db.Uuid
+  graphId          String   @map("graph_id") @db.Uuid
+  sourceNodeId     String   @map("source_node_id") @db.Uuid
+  targetNodeId     String   @map("target_node_id") @db.Uuid
+  relationshipType String   @map("relationship_type") @db.VarChar(100)
+  weight           Float    @default(1.0)
+  propertiesJson   String?  @map("properties_json") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  graph KnowledgeGraphModel @relation(fields: [graphId], references: [id], onDelete: Cascade)
+
+  @@index([graphId])
+  @@index([sourceNodeId])
+  @@index([targetNodeId])
+  @@map("research_edges")
+}
+
+model RecommendationEngineModel {
+  id                  String   @id @default(uuid()) @db.Uuid
+  researcherProfileId String   @map("researcher_profile_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  recommendations RecommendationModel[]
+
+  @@index([researcherProfileId])
+  @@map("recommendation_engines")
+}
+
+model RecommendationModel {
+  id                   String   @id @default(uuid()) @db.Uuid
+  engineId             String   @map("engine_id") @db.Uuid
+  recommendationType   String   @map("recommendation_type") @db.VarChar(50)
+  targetEntityId       String   @map("target_entity_id") @db.VarChar(255)
+  recommendedEntityId String   @map("recommended_entity_id") @db.VarChar(255)
+  confidence           Float
+  score                Float
+  explanation          String   @db.Text
+  metadataJson         String?  @map("metadata_json") @db.Text
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  engine RecommendationEngineModel @relation(fields: [engineId], references: [id], onDelete: Cascade)
+
+  @@index([engineId])
+  @@index([targetEntityId])
+  @@map("recommendations")
+}
+
+model ExpertiseProfileModel {
+  id                  String   @id @default(uuid()) @db.Uuid
+  researcherProfileId String   @map("researcher_profile_id") @db.Uuid
+  overallScore        Float    @default(0.0) @map("overall_score")
+  conceptsJson        String?  @map("concepts_json") @db.Text
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([researcherProfileId])
+  @@map("expertise_profiles")
+}
+
+model ResearchGapModel {
+  id           String   @id @default(uuid()) @db.Uuid
+  topic        String   @db.VarChar(255)
+  field        String   @db.VarChar(255)
+  description  String   @db.Text
+  densityScore Float    @map("density_score")
+  gapScore     Float    @map("gap_score")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([topic])
+  @@map("research_gaps")
+}
+
+
 
 
 

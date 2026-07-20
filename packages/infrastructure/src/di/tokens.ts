@@ -66,6 +66,17 @@ export const DITokens = {
   PatentRepository: Symbol.for('PatentRepository'),
   ProfessionalActivityRepository: Symbol.for('ProfessionalActivityRepository'),
   AcademicRecognitionApplicationService: Symbol.for('AcademicRecognitionApplicationService'),
+
+  // Sprint 13 AI Research Intelligence Tokens
+  KnowledgeGraphRepository: Symbol.for('KnowledgeGraphRepository'),
+  EmbeddingRepository: Symbol.for('EmbeddingRepository'),
+  RecommendationRepository: Symbol.for('RecommendationRepository'),
+  AIProviderAdapter: Symbol.for('AIProviderAdapter'),
+  EmbeddingService: Symbol.for('EmbeddingService'),
+  VectorStoreAdapter: Symbol.for('VectorStoreAdapter'),
+  KnowledgeGraphAdapter: Symbol.for('KnowledgeGraphAdapter'),
+  BackgroundJobProcessor: Symbol.for('BackgroundJobProcessor'),
+  AiIntelligenceApplicationService: Symbol.for('AiIntelligenceApplicationService'),
 } as const;
 
 export type DIToken = (typeof DITokens)[keyof typeof DITokens] | string;

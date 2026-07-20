@@ -58,3 +58,6 @@ export * from './research-intelligence/index.js';
 
 // ─── Research Discovery Domain (Sprint 12) ────────────────────────────
 export * from './research-discovery/index.js';
+
+// ─── AI Research Intelligence Domain (Sprint 13) ──────────────────────
+export * from './ai-intelligence/index.js';

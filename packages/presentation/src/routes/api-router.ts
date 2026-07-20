@@ -11,6 +11,7 @@ import type { RequestHandler } from 'express';
 import { AuthenticationController } from '../authentication/authentication.controller.js';
 import { createAuthenticationRouter } from '../authentication/authentication.routes.js';
 import type { AcademicRecognitionController } from '../controllers/academic-recognition.controller.js';
+import type { AiIntelligenceController } from '../controllers/ai-intelligence.controller.js';
 import type { ResearchAssetsController } from '../controllers/research-assets.controller.js';
 import type { ResearchDiscoveryController } from '../controllers/research-discovery.controller.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
@@ -21,6 +22,7 @@ import { SchemaValidator } from '../validation/schema-validator.js';
 import { createValidationMiddleware } from '../validation/validation.middleware.js';
 
 import { createAcademicRecognitionRouter } from './academic-recognition.routes.js';
+import { createAiIntelligenceRouter } from './ai-intelligence.routes.js';
 import { createResearchAssetsRouter } from './research-assets.routes.js';
 import { createResearchDiscoveryRouter } from './research-discovery.routes.js';
 import { createResearchIntelligenceRouter } from './research-intelligence.routes.js';
@@ -36,6 +38,7 @@ export class ApiRouter {
     academicRecognitionController?: AcademicRecognitionController,
     researchIntelligenceController?: ResearchIntelligenceController,
     researchDiscoveryController?: ResearchDiscoveryController,
+    aiIntelligenceController?: AiIntelligenceController,
   ): Router {
     const router = Router();
 
@@ -96,7 +99,17 @@ export class ApiRouter {
       router.use(`${versionPrefix}`, discoveryRouter);
     }
 
+    // ——— AI Intelligence Sub-Router ———
+    if (aiIntelligenceController) {
+      const aiRouter = createAiIntelligenceRouter({
+        controller: aiIntelligenceController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}`, aiRouter);
+    }
+
     // ——— Research Identity Endpoint Schema Validators ———
+
     const createValidator = new SchemaValidator({
       primaryFocus: [
         SchemaValidator.required('primaryFocus'),

@@ -28,15 +28,17 @@ export type {
   CurrentUserResponseDto,
 } from './dto/auth-dtos.js';
 export * from './dto/publication-dtos.js';
+export * from './dto/ai-intelligence-dtos.js';
 export { ResultHttpMapper } from './responders/result-http-mapper.js';
 
-// Controllers (Sprint 1-4 & Sprint 5 & Sprint 7/8/9)
+// Controllers (Sprint 1-4 & Sprint 5 & Sprint 7/8/9 & Sprint 13)
 export { ResearchIdentityController } from './controllers/research-identity.controller.js';
 export { ResearchProfileController } from './controllers/research-profile.controller.js';
 export { PublicationController } from './controllers/publication.controller.js';
 export { ResearchProjectController } from './controllers/research-project.controller.js';
 export { ResearchAssetsController } from './controllers/research-assets.controller.js';
 export { AcademicRecognitionController } from './controllers/academic-recognition.controller.js';
+export { AiIntelligenceController } from './controllers/ai-intelligence.controller.js';
 export { HealthController } from './health/health.controller.js';
 export { AuthenticationController } from './authentication/authentication.controller.js';
 
@@ -57,6 +59,7 @@ export { createResearchProfileRouter } from './routes/research-profile.routes.js
 export { createPublicationRouter } from './routes/publication.routes.js';
 export { createResearchAssetsRouter } from './routes/research-assets.routes.js';
 export { createAcademicRecognitionRouter } from './routes/academic-recognition.routes.js';
+export { createAiIntelligenceRouter } from './routes/ai-intelligence.routes.js';
 
 // Bootstrap & Server
 export { bootstrapPresentationServer } from './bootstrap/bootstrap-application.js';
