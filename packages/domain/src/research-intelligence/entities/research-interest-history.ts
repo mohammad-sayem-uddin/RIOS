@@ -4,20 +4,14 @@
  * Tracks the evolution of a researcher's interests over time.
  */
 
-import { Entity, UniqueId, Result } from '@rios/shared';
-
-import {
-  ResearchDomain,
-  TimelineDate,
-} from '../value-objects/research-intelligence-value-objects.js';
+import { Entity, Result, UniqueId } from '@rios/shared';
 
 export interface ResearchInterestHistoryProps {
-  id: string;
-  profileId: string;
-  domain: ResearchDomain;
-  startDate: TimelineDate;
-  endDate?: TimelineDate;
+  topic: string;
+  startedDate: Date;
+  endedDate?: Date;
   isActive: boolean;
+  profileId?: string;
 }
 
 export class ResearchInterestHistory extends Entity<ResearchInterestHistoryProps> {
@@ -25,80 +19,76 @@ export class ResearchInterestHistory extends Entity<ResearchInterestHistoryProps
     super(props, id);
   }
 
-  public get profileId(): string {
-    return this.props.profileId;
+  public get topic(): string {
+    return this.props.topic;
   }
 
-  public get domain(): ResearchDomain {
-    return this.props.domain;
+  public get domain(): string {
+    return this.props.topic;
   }
 
-  public get startDate(): TimelineDate {
-    return this.props.startDate;
+  public get startedDate(): Date {
+    return this.props.startedDate;
   }
 
-  public get endDate(): TimelineDate | undefined {
-    return this.props.endDate;
+  public get startDate(): Date {
+    return this.props.startedDate;
+  }
+
+  public get endedDate(): Date | undefined {
+    return this.props.endedDate;
+  }
+
+  public get endDate(): Date | undefined {
+    return this.props.endedDate;
   }
 
   public get isActive(): boolean {
     return this.props.isActive;
   }
 
-  public deactivate(endDate: TimelineDate): Result<void> {
-    if (endDate.value.getTime() < this.props.startDate.value.getTime()) {
-      return Result.fail<void>('End date cannot be before start date');
-    }
-    this.props.endDate = endDate;
-    this.props.isActive = false;
-    return Result.ok<void>(undefined);
+  public get profileId(): string | undefined {
+    return this.props.profileId;
   }
 
-  public static create(props: {
-    id: string;
-    profileId: string;
-    domain: string;
-    startDate: Date;
-    endDate?: Date;
-    isActive?: boolean;
-  }): Result<ResearchInterestHistory> {
-    if (props.profileId.trim().length === 0) {
-      return Result.fail<ResearchInterestHistory>('Profile ID is required');
+  public static create(
+    props: {
+      topic?: string;
+      domain?: string;
+      startedDate?: Date;
+      startDate?: Date;
+      endedDate?: Date;
+      endDate?: Date;
+      isActive?: boolean;
+      profileId?: string;
+    },
+    id?: UniqueId,
+  ): Result<ResearchInterestHistory> {
+    const topic = (props.topic ?? props.domain ?? '').trim();
+    if (topic.length === 0) {
+      return Result.fail<ResearchInterestHistory>('Research topic/domain cannot be empty');
     }
 
-    const domainResult = ResearchDomain.create(props.domain);
-    if (domainResult.isFailure) {
-      return Result.fail<ResearchInterestHistory>(domainResult.error);
+    const start = props.startedDate ?? props.startDate ?? new Date();
+    const end = props.endedDate ?? props.endDate;
+
+    if (end && end.getTime() < start.getTime()) {
+      return Result.fail<ResearchInterestHistory>('End date cannot be before start date');
     }
 
-    const startDateResult = TimelineDate.create(props.startDate);
-    if (startDateResult.isFailure) {
-      return Result.fail<ResearchInterestHistory>(startDateResult.error);
-    }
-
-    let endDateVO: TimelineDate | undefined;
-    if (props.endDate) {
-      const endDateResult = TimelineDate.create(props.endDate);
-      if (endDateResult.isFailure) {
-        return Result.fail<ResearchInterestHistory>(endDateResult.error);
-      }
-      endDateVO = endDateResult.value;
-      if (endDateVO.value.getTime() < startDateResult.value.value.getTime()) {
-        return Result.fail<ResearchInterestHistory>('End date cannot be before start date');
-      }
-    }
-
-    const isActive = props.isActive ?? !props.endDate;
+    const isActive = props.isActive ?? !end;
 
     return Result.ok<ResearchInterestHistory>(
-      new ResearchInterestHistory({
-        id: props.id,
-        profileId: props.profileId.trim(),
-        domain: domainResult.value,
-        startDate: startDateResult.value,
-        endDate: endDateVO,
-        isActive,
-      }),
+      new ResearchInterestHistory(
+        {
+          topic,
+          startedDate: start,
+          endedDate: end,
+          isActive,
+          profileId: props.profileId,
+        },
+        id,
+      ),
     );
   }
 }

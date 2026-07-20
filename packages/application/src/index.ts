@@ -52,3 +52,6 @@ export * from './research-assets/index.js';
 
 // ─── Academic Recognition Domain (Sprint 10) ──────────────────────────
 export * from './academic-recognition/index.js';
+
+// ─── Research Intelligence Domain (Sprint 11) ─────────────────────────
+export * from './research-intelligence/index.js';

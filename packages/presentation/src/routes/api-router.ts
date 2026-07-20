@@ -13,6 +13,7 @@ import { createAuthenticationRouter } from '../authentication/authentication.rou
 import type { AcademicRecognitionController } from '../controllers/academic-recognition.controller.js';
 import type { ResearchAssetsController } from '../controllers/research-assets.controller.js';
 import type { ResearchIdentityController } from '../controllers/research-identity.controller.js';
+import type { ResearchIntelligenceController } from '../controllers/research-intelligence.controller.js';
 import type { HealthController } from '../health/health.controller.js';
 import { SwaggerGenerator } from '../swagger/swagger.generator.js';
 import { SchemaValidator } from '../validation/schema-validator.js';
@@ -20,6 +21,7 @@ import { createValidationMiddleware } from '../validation/validation.middleware.
 
 import { createAcademicRecognitionRouter } from './academic-recognition.routes.js';
 import { createResearchAssetsRouter } from './research-assets.routes.js';
+import { createResearchIntelligenceRouter } from './research-intelligence.routes.js';
 
 export class ApiRouter {
   public static create(
@@ -30,6 +32,7 @@ export class ApiRouter {
     authMiddleware?: RequestHandler,
     researchAssetsController?: ResearchAssetsController,
     academicRecognitionController?: AcademicRecognitionController,
+    researchIntelligenceController?: ResearchIntelligenceController,
   ): Router {
     const router = Router();
 
@@ -70,6 +73,15 @@ export class ApiRouter {
         authMiddleware,
       });
       router.use(`${versionPrefix}`, recognitionRouter);
+    }
+
+    // ——— Research Intelligence Sub-Router ———
+    if (researchIntelligenceController) {
+      const intelligenceRouter = createResearchIntelligenceRouter({
+        controller: researchIntelligenceController,
+        authMiddleware,
+      });
+      router.use(`${versionPrefix}`, intelligenceRouter);
     }
 
     // ——— Research Identity Endpoint Schema Validators ———

@@ -9,3 +9,4 @@ export * from './research-identity/index.js';
 export * from './publications/index.js';
 export * from './research-assets/index.js';
 export * from './academic-recognition/index.js';
+export * from './research-intelligence/index.js';

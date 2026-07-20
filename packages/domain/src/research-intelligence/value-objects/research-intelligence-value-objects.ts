@@ -118,23 +118,6 @@ export class ResearchYear extends ValueObject<{ value: number }> {
   }
 }
 
-export class CitationCount extends ValueObject<{ value: number }> {
-  private constructor(props: { value: number }) {
-    super(props);
-  }
-
-  public get value(): number {
-    return this.props.value;
-  }
-
-  public static create(count: number): Result<CitationCount> {
-    if (!Number.isInteger(count) || count < 0) {
-      return Result.fail<CitationCount>('Citation count cannot be negative');
-    }
-    return Result.ok<CitationCount>(new CitationCount({ value: count }));
-  }
-}
-
 export class HIndex extends ValueObject<{ value: number }> {
   private constructor(props: { value: number }) {
     super(props);
@@ -245,26 +228,6 @@ export class ResearchDomain extends ValueObject<{ value: string }> {
       return Result.fail<ResearchDomain>('Research domain cannot exceed 200 characters');
     }
     return Result.ok<ResearchDomain>(new ResearchDomain({ value: domain.trim() }));
-  }
-}
-
-export class ResearchArea extends ValueObject<{ value: string }> {
-  private constructor(props: { value: string }) {
-    super(props);
-  }
-
-  public get value(): string {
-    return this.props.value;
-  }
-
-  public static create(area: string): Result<ResearchArea> {
-    if (area.trim().length === 0) {
-      return Result.fail<ResearchArea>('Research area cannot be empty');
-    }
-    if (area.length > 200) {
-      return Result.fail<ResearchArea>('Research area cannot exceed 200 characters');
-    }
-    return Result.ok<ResearchArea>(new ResearchArea({ value: area.trim() }));
   }
 }
 

@@ -193,6 +193,9 @@ model ResearchProfile {
   academicGrants   AcademicGrant[]
   academicPatents  AcademicPatent[]
   professionalActivities ProfessionalActivity[]
+  academicTimelines AcademicTimelineModel[]
+  collaborationNetworks CollaborationNetworkModel[]
+  researchAnalytics ResearchAnalyticsModel[]
 
   @@index([userId])
   @@map("research_profiles")
@@ -759,6 +762,213 @@ model ProfessionalActivity {
   @@index([category])
   @@map("professional_activities")
 }
+
+// ─── Sprint 11 Research Intelligence Models ──────────────────────────────
+
+model AcademicTimelineModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile                 ResearchProfile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  events                  TimelineEventModel[]
+  milestones              CareerMilestoneModel[]
+  institutionHistories    InstitutionHistoryModel[]
+  researchInterestHistories ResearchInterestHistoryModel[]
+
+  @@index([profileId])
+  @@map("academic_timelines")
+}
+
+model TimelineEventModel {
+  id           String   @id @default(uuid()) @db.Uuid
+  timelineId   String   @map("timeline_id") @db.Uuid
+  eventType    String   @map("event_type") @db.VarChar(100)
+  title        String   @db.VarChar(255)
+  description  String?  @db.Text
+  eventDate    DateTime @map("event_date") @db.Timestamptz
+  metadataJson String?  @map("metadata_json") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  timeline AcademicTimelineModel @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@index([timelineId])
+  @@index([eventDate])
+  @@map("timeline_events")
+}
+
+model CareerMilestoneModel {
+  id            String   @id @default(uuid()) @db.Uuid
+  timelineId    String   @map("timeline_id") @db.Uuid
+  milestoneType String   @map("milestone_type") @db.VarChar(100)
+  title         String   @db.VarChar(255)
+  milestoneDate DateTime @map("milestone_date") @db.Timestamptz
+  description   String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  timeline AcademicTimelineModel @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@index([timelineId])
+  @@map("career_milestones")
+}
+
+model InstitutionHistoryModel {
+  id              String    @id @default(uuid()) @db.Uuid
+  timelineId      String    @map("timeline_id") @db.Uuid
+  institutionName String    @map("institution_name") @db.VarChar(255)
+  role            String?   @db.VarChar(100)
+  startDate       DateTime  @map("start_date") @db.Timestamptz
+  endDate         DateTime? @map("end_date") @db.Timestamptz
+  isCurrent       Boolean   @default(false) @map("is_current")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  timeline AcademicTimelineModel @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@index([timelineId])
+  @@map("institution_histories")
+}
+
+model ResearchInterestHistoryModel {
+  id          String    @id @default(uuid()) @db.Uuid
+  timelineId  String    @map("timeline_id") @db.Uuid
+  topic       String    @db.VarChar(150)
+  startedDate DateTime  @map("started_date") @db.Timestamptz
+  endedDate   DateTime? @map("ended_date") @db.Timestamptz
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  timeline AcademicTimelineModel @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+
+  @@index([timelineId])
+  @@map("research_interest_histories")
+}
+
+model CollaborationNetworkModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile        ResearchProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  collaborations CollaborationModel[]
+
+  @@index([profileId])
+  @@map("collaboration_networks")
+}
+
+model CollaborationModel {
+  id                   String    @id @default(uuid()) @db.Uuid
+  networkId            String    @map("network_id") @db.Uuid
+  collaboratorName     String    @map("collaborator_name") @db.VarChar(255)
+  collaboratorEmail    String?   @map("collaborator_email") @db.VarChar(255)
+  collaboratorOrcid    String?   @map("collaborator_orcid") @db.VarChar(50)
+  institution          String?   @db.VarChar(255)
+  strength             String    @default("weak") @db.VarChar(50)
+  jointPublicationCount Int      @default(1) @map("joint_publication_count")
+  firstCollabDate      DateTime? @map("first_collab_date") @db.Timestamptz
+  lastCollabDate       DateTime? @map("last_collab_date") @db.Timestamptz
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  network   CollaborationNetworkModel @relation(fields: [networkId], references: [id], onDelete: Cascade)
+  coAuthors CoAuthorModel[]
+
+  @@index([networkId])
+  @@map("collaborations")
+}
+
+model CoAuthorModel {
+  id              String   @id @default(uuid()) @db.Uuid
+  collaborationId String   @map("collaboration_id") @db.Uuid
+  authorName      String   @map("author_name") @db.VarChar(255)
+  email           String?  @db.VarChar(255)
+  orcid           String?  @db.VarChar(50)
+  affiliation     String?  @db.VarChar(255)
+  paperCount      Int      @default(1) @map("paper_count")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  collaboration CollaborationModel @relation(fields: [collaborationId], references: [id], onDelete: Cascade)
+
+  @@index([collaborationId])
+  @@map("co_authors")
+}
+
+model ResearchAnalyticsModel {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile          ResearchProfile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  publicationStats PublicationStatisticModel[]
+  citationStats    CitationStatisticModel[]
+  metrics          ResearchMetricModel[]
+  trends           ResearchTrendModel[]
+
+  @@index([profileId])
+  @@map("research_analytics")
+}
+
+model PublicationStatisticModel {
+  id                       String   @id @default(uuid()) @db.Uuid
+  analyticsId              String   @map("analytics_id") @db.Uuid
+  year                     Int
+  count                    Int      @default(0)
+  firstAuthorCount         Int      @default(0) @map("first_author_count")
+  correspondingAuthorCount Int      @default(0) @map("corresponding_author_count")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  analytics ResearchAnalyticsModel @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  @@index([analyticsId])
+  @@map("publication_statistics")
+}
+
+model CitationStatisticModel {
+  id                String   @id @default(uuid()) @db.Uuid
+  analyticsId       String   @map("analytics_id") @db.Uuid
+  year              Int
+  citationCount     Int      @default(0) @map("citation_count")
+  citationsPerPaper Float    @default(0.0) @map("citations_per_paper")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  analytics ResearchAnalyticsModel @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  @@index([analyticsId])
+  @@map("citation_statistics")
+}
+
+model ResearchMetricModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  analyticsId String   @map("analytics_id") @db.Uuid
+  metricType  String   @map("metric_type") @db.VarChar(100)
+  metricName  String   @map("metric_name") @db.VarChar(100)
+  value       Float    @default(0.0)
+  measuredAt  DateTime @default(now()) @map("measured_at") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  analytics ResearchAnalyticsModel @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  @@index([analyticsId])
+  @@map("research_metrics")
+}
+
+model ResearchTrendModel {
+  id               String   @id @default(uuid()) @db.Uuid
+  analyticsId      String   @map("analytics_id") @db.Uuid
+  topic            String   @db.VarChar(150)
+  growthRate       Float    @default(0.0) @map("growth_rate")
+  publicationCount Int      @default(0) @map("publication_count")
+  period           String   @db.VarChar(50)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  analytics ResearchAnalyticsModel @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  @@index([analyticsId])
+  @@map("research_trends")
+}
+
 
 
 

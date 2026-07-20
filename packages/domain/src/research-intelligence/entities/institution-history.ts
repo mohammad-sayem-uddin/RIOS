@@ -4,23 +4,15 @@
  * Represents a researcher's affiliation with an institution over time.
  */
 
-import { Entity, UniqueId, Result } from '@rios/shared';
-
-import {
-  InstitutionId,
-  TimelineDate,
-} from '../value-objects/research-intelligence-value-objects.js';
+import { Entity, Result, UniqueId } from '@rios/shared';
 
 export interface InstitutionHistoryProps {
-  id: string;
-  profileId: string;
-  institutionId?: InstitutionId;
   institutionName: string;
-  department?: string;
-  position: string;
-  startDate: TimelineDate;
-  endDate?: TimelineDate;
+  role?: string;
+  startDate: Date;
+  endDate?: Date;
   isCurrent: boolean;
+  profileId?: string;
 }
 
 export class InstitutionHistory extends Entity<InstitutionHistoryProps> {
@@ -28,31 +20,19 @@ export class InstitutionHistory extends Entity<InstitutionHistoryProps> {
     super(props, id);
   }
 
-  public get profileId(): string {
-    return this.props.profileId;
-  }
-
-  public get institutionId(): InstitutionId | undefined {
-    return this.props.institutionId;
-  }
-
   public get institutionName(): string {
     return this.props.institutionName;
   }
 
-  public get department(): string | undefined {
-    return this.props.department;
+  public get role(): string | undefined {
+    return this.props.role;
   }
 
-  public get position(): string {
-    return this.props.position;
-  }
-
-  public get startDate(): TimelineDate {
+  public get startDate(): Date {
     return this.props.startDate;
   }
 
-  public get endDate(): TimelineDate | undefined {
+  public get endDate(): Date | undefined {
     return this.props.endDate;
   }
 
@@ -60,73 +40,46 @@ export class InstitutionHistory extends Entity<InstitutionHistoryProps> {
     return this.props.isCurrent;
   }
 
-  public endAffiliation(endDate: TimelineDate): Result<void> {
-    if (endDate.value.getTime() < this.props.startDate.value.getTime()) {
-      return Result.fail<void>('End date cannot be before start date');
-    }
-    this.props.endDate = endDate;
-    this.props.isCurrent = false;
-    return Result.ok<void>(undefined);
+  public get profileId(): string | undefined {
+    return this.props.profileId;
   }
 
-  public static create(props: {
-    id: string;
-    profileId: string;
-    institutionId?: InstitutionId;
-    institutionName: string;
-    department?: string;
-    position: string;
-    startDate: Date;
-    endDate?: Date;
-    isCurrent?: boolean;
-  }): Result<InstitutionHistory> {
+  public static create(
+    props: {
+      institutionName: string;
+      role?: string;
+      startDate: Date;
+      endDate?: Date;
+      isCurrent?: boolean;
+      profileId?: string;
+    },
+    id?: UniqueId,
+  ): Result<InstitutionHistory> {
     if (props.institutionName.trim().length === 0) {
       return Result.fail<InstitutionHistory>('Institution name cannot be empty');
     }
     if (props.institutionName.length > 255) {
       return Result.fail<InstitutionHistory>('Institution name cannot exceed 255 characters');
     }
-    if (props.profileId.trim().length === 0) {
-      return Result.fail<InstitutionHistory>('Profile ID is required');
-    }
-    if (props.position.trim().length === 0) {
-      return Result.fail<InstitutionHistory>('Position cannot be empty');
-    }
-    if (props.position.length > 255) {
-      return Result.fail<InstitutionHistory>('Position cannot exceed 255 characters');
-    }
 
-    const startDateResult = TimelineDate.create(props.startDate);
-    if (startDateResult.isFailure) {
-      return Result.fail<InstitutionHistory>(startDateResult.error);
-    }
-
-    let endDateVO: TimelineDate | undefined;
-    if (props.endDate) {
-      const endDateResult = TimelineDate.create(props.endDate);
-      if (endDateResult.isFailure) {
-        return Result.fail<InstitutionHistory>(endDateResult.error);
-      }
-      endDateVO = endDateResult.value;
-      if (endDateVO.value.getTime() < startDateResult.value.value.getTime()) {
-        return Result.fail<InstitutionHistory>('End date cannot be before start date');
-      }
+    if (props.endDate && props.endDate.getTime() < props.startDate.getTime()) {
+      return Result.fail<InstitutionHistory>('End date cannot be before start date');
     }
 
     const isCurrent = props.isCurrent ?? !props.endDate;
 
     return Result.ok<InstitutionHistory>(
-      new InstitutionHistory({
-        id: props.id,
-        profileId: props.profileId.trim(),
-        institutionId: props.institutionId,
-        institutionName: props.institutionName.trim(),
-        department: props.department?.trim(),
-        position: props.position.trim(),
-        startDate: startDateResult.value,
-        endDate: endDateVO,
-        isCurrent,
-      }),
+      new InstitutionHistory(
+        {
+          institutionName: props.institutionName.trim(),
+          role: props.role,
+          startDate: props.startDate,
+          endDate: props.endDate,
+          isCurrent,
+          profileId: props.profileId,
+        },
+        id,
+      ),
     );
   }
 }

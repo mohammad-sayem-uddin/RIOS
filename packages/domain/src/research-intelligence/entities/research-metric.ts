@@ -4,18 +4,20 @@
  * Represents a single research metric data point for analytics.
  */
 
-import { Entity, UniqueId, Result } from '@rios/shared';
+import { Entity, Result, UniqueId } from '@rios/shared';
 
-import { MetricName } from '../value-objects/research-intelligence-value-objects.js';
+import {
+  MetricName,
+  MetricType,
+  MetricTypeValue,
+  MetricValue,
+} from '../value-objects/research-intelligence-value-objects.js';
 
 export interface ResearchMetricProps {
-  id: string;
-  profileId: string;
-  metricName: MetricName;
-  value: number;
-  unit: string;
-  source: string;
-  recordedAt: Date;
+  metricType: MetricType;
+  metricName: string;
+  value: MetricValue;
+  measuredAt: Date;
 }
 
 export class ResearchMetric extends Entity<ResearchMetricProps> {
@@ -23,65 +25,50 @@ export class ResearchMetric extends Entity<ResearchMetricProps> {
     super(props, id);
   }
 
-  public get profileId(): string {
-    return this.props.profileId;
+  public get metricType(): MetricType {
+    return this.props.metricType;
   }
 
-  public get metricName(): MetricName {
+  public get metricName(): string {
     return this.props.metricName;
   }
 
-  public get value(): number {
+  public get value(): MetricValue {
     return this.props.value;
   }
 
-  public get unit(): string {
-    return this.props.unit;
+  public get measuredAt(): Date {
+    return this.props.measuredAt;
   }
 
-  public get source(): string {
-    return this.props.source;
-  }
+  public static create(
+    props: {
+      metricType: string;
+      metricName: string;
+      value: number;
+      measuredAt?: Date;
+    },
+    id?: UniqueId,
+  ): Result<ResearchMetric> {
+    const typeRes = MetricType.create(props.metricType as MetricTypeValue);
+    if (typeRes.isFailure) return Result.fail<ResearchMetric>(typeRes.error);
 
-  public get recordedAt(): Date {
-    return this.props.recordedAt;
-  }
+    const nameRes = MetricName.create(props.metricName);
+    if (nameRes.isFailure) return Result.fail<ResearchMetric>(nameRes.error);
 
-  public static create(props: {
-    id: string;
-    profileId: string;
-    metricName: string;
-    value: number;
-    unit: string;
-    source: string;
-    recordedAt: Date;
-  }): Result<ResearchMetric> {
-    if (props.profileId.trim().length === 0) {
-      return Result.fail<ResearchMetric>('Profile ID is required');
-    }
-
-    const metricNameResult = MetricName.create(props.metricName);
-    if (metricNameResult.isFailure) {
-      return Result.fail<ResearchMetric>(metricNameResult.error);
-    }
-
-    if (props.unit.trim().length === 0) {
-      return Result.fail<ResearchMetric>('Unit cannot be empty');
-    }
-    if (props.source.trim().length === 0) {
-      return Result.fail<ResearchMetric>('Source cannot be empty');
-    }
+    const valRes = MetricValue.create(props.value);
+    if (valRes.isFailure) return Result.fail<ResearchMetric>(valRes.error);
 
     return Result.ok<ResearchMetric>(
-      new ResearchMetric({
-        id: props.id,
-        profileId: props.profileId.trim(),
-        metricName: metricNameResult.value,
-        value: props.value,
-        unit: props.unit.trim(),
-        source: props.source.trim(),
-        recordedAt: props.recordedAt,
-      }),
+      new ResearchMetric(
+        {
+          metricType: typeRes.value,
+          metricName: nameRes.value.value,
+          value: valRes.value,
+          measuredAt: props.measuredAt ?? new Date(),
+        },
+        id,
+      ),
     );
   }
 }

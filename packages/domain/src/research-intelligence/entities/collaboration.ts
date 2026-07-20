@@ -4,39 +4,27 @@
  * Represents a research collaboration between the researcher and another party.
  */
 
-import { Entity, UniqueId, Result } from '@rios/shared';
+import { Entity, Result, UniqueId } from '@rios/shared';
 
-import {
-  CollaborationId,
-  CollaborationStrength,
-  CollaborationStrengthType,
-  ResearchDomain,
-  InstitutionId,
-} from '../value-objects/research-intelligence-value-objects.js';
+import { CollaborationStrength } from '../value-objects/research-intelligence-value-objects.js';
+
+import { CoAuthor } from './co-author.js';
 
 export interface CollaborationProps {
-  id: CollaborationId;
-  profileId: string;
   collaboratorName: string;
   collaboratorEmail?: string;
-  institutionId?: InstitutionId;
-  institutionName?: string;
+  collaboratorOrcid?: string;
+  institution?: string;
   strength: CollaborationStrength;
-  domains: ResearchDomain[];
-  startDate: Date;
-  endDate?: Date;
-  publicationCount: number;
-  projectCount: number;
-  isActive: boolean;
+  jointPublicationCount: number;
+  firstCollabDate?: Date;
+  lastCollabDate?: Date;
+  coAuthors: CoAuthor[];
 }
 
 export class Collaboration extends Entity<CollaborationProps> {
   private constructor(props: CollaborationProps, id?: UniqueId) {
     super(props, id);
-  }
-
-  public get profileId(): string {
-    return this.props.profileId;
   }
 
   public get collaboratorName(): string {
@@ -47,125 +35,93 @@ export class Collaboration extends Entity<CollaborationProps> {
     return this.props.collaboratorEmail;
   }
 
-  public get institutionId(): InstitutionId | undefined {
-    return this.props.institutionId;
+  public get collaboratorOrcid(): string | undefined {
+    return this.props.collaboratorOrcid;
   }
 
-  public get institutionName(): string | undefined {
-    return this.props.institutionName;
+  public get institution(): string | undefined {
+    return this.props.institution;
   }
 
   public get strength(): CollaborationStrength {
     return this.props.strength;
   }
 
-  public get domains(): ReadonlyArray<ResearchDomain> {
-    return [...this.props.domains];
+  public get jointPublicationCount(): number {
+    return this.props.jointPublicationCount;
   }
 
-  public get startDate(): Date {
-    return this.props.startDate;
+  public get firstCollabDate(): Date | undefined {
+    return this.props.firstCollabDate;
   }
 
-  public get endDate(): Date | undefined {
-    return this.props.endDate;
+  public get lastCollabDate(): Date | undefined {
+    return this.props.lastCollabDate;
   }
 
-  public get publicationCount(): number {
-    return this.props.publicationCount;
-  }
-
-  public get projectCount(): number {
-    return this.props.projectCount;
-  }
-
-  public get isActive(): boolean {
-    return this.props.isActive;
+  public get coAuthors(): ReadonlyArray<CoAuthor> {
+    return [...this.props.coAuthors];
   }
 
   public updateStrength(strength: CollaborationStrength): void {
     this.props.strength = strength;
   }
 
-  public incrementPublicationCount(): void {
-    this.props.publicationCount += 1;
+  public addCoAuthor(coAuthor: CoAuthor): void {
+    this.props.coAuthors.push(coAuthor);
   }
 
-  public incrementProjectCount(): void {
-    this.props.projectCount += 1;
-  }
-
-  public deactivate(): void {
-    this.props.isActive = false;
-    this.props.endDate = new Date();
-  }
-
-  public addDomain(domain: ResearchDomain): void {
-    const exists = this.props.domains.some((d) => d.value === domain.value);
-    if (!exists) {
-      this.props.domains.push(domain);
-    }
-  }
-
-  public static create(props: {
-    id: CollaborationId;
-    profileId: string;
-    collaboratorName: string;
-    collaboratorEmail?: string;
-    institutionId?: InstitutionId;
-    institutionName?: string;
-    strength: CollaborationStrengthType;
-    domains: string[];
-    startDate: Date;
-    endDate?: Date;
-    publicationCount?: number;
-    projectCount?: number;
-    isActive?: boolean;
-  }): Result<Collaboration> {
+  public static create(
+    props: {
+      collaboratorName: string;
+      collaboratorEmail?: string;
+      collaboratorOrcid?: string;
+      institution?: string;
+      strength: CollaborationStrength;
+      jointPublicationCount?: number;
+      firstCollabDate?: Date;
+      lastCollabDate?: Date;
+      coAuthors?: CoAuthor[];
+    },
+    id?: UniqueId,
+  ): Result<Collaboration> {
     if (props.collaboratorName.trim().length === 0) {
       return Result.fail<Collaboration>('Collaborator name cannot be empty');
     }
     if (props.collaboratorName.length > 255) {
       return Result.fail<Collaboration>('Collaborator name cannot exceed 255 characters');
     }
-    if (props.profileId.trim().length === 0) {
-      return Result.fail<Collaboration>('Profile ID is required');
-    }
 
-    const strengthResult = CollaborationStrength.create(props.strength);
-    if (strengthResult.isFailure) {
-      return Result.fail<Collaboration>(strengthResult.error);
-    }
+    const collaboratorEmail =
+      props.collaboratorEmail !== undefined && props.collaboratorEmail.trim() !== ''
+        ? props.collaboratorEmail.trim()
+        : undefined;
 
-    const domainVOs: ResearchDomain[] = [];
-    for (const domain of props.domains) {
-      const domainResult = ResearchDomain.create(domain);
-      if (domainResult.isFailure) {
-        return Result.fail<Collaboration>(domainResult.error);
-      }
-      domainVOs.push(domainResult.value);
-    }
+    const collaboratorOrcid =
+      props.collaboratorOrcid !== undefined && props.collaboratorOrcid.trim() !== ''
+        ? props.collaboratorOrcid.trim()
+        : undefined;
 
-    if (props.startDate > (props.endDate ?? new Date())) {
-      return Result.fail<Collaboration>('Start date cannot be after end date');
-    }
+    const institution =
+      props.institution !== undefined && props.institution.trim() !== ''
+        ? props.institution.trim()
+        : undefined;
 
     return Result.ok<Collaboration>(
-      new Collaboration({
-        id: props.id,
-        profileId: props.profileId.trim(),
-        collaboratorName: props.collaboratorName.trim(),
-        collaboratorEmail: props.collaboratorEmail,
-        institutionId: props.institutionId,
-        institutionName: props.institutionName,
-        strength: strengthResult.value,
-        domains: domainVOs,
-        startDate: props.startDate,
-        endDate: props.endDate,
-        publicationCount: props.publicationCount ?? 0,
-        projectCount: props.projectCount ?? 0,
-        isActive: props.isActive ?? true,
-      }),
+      new Collaboration(
+        {
+          collaboratorName: props.collaboratorName.trim(),
+          collaboratorEmail,
+          collaboratorOrcid,
+          institution,
+          strength: props.strength,
+          jointPublicationCount: props.jointPublicationCount ?? 1,
+          firstCollabDate: props.firstCollabDate,
+          lastCollabDate: props.lastCollabDate,
+          coAuthors: props.coAuthors ?? [],
+        },
+        id,
+      ),
     );
   }
 }
