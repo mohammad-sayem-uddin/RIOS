@@ -111,8 +111,22 @@ export class JwtTokenProvider implements ITokenProvider {
         );
       }
 
-      const randomHash = randomBytes(32).toString('hex');
-      const refreshTokenRes = RefreshToken.create(randomHash);
+      // Refresh token is a separately-signed JWT carrying the same subject/session
+      // claims with the longer refresh expiry. A random jti guarantees a distinct
+      // token string per issuance (rotation). It is verified via the same HMAC
+      // signature path as the access token.
+      const refreshPayload: RawJwtPayload & { jti: string } = {
+        sub: user.userId.value,
+        sid: session.sessionId.value,
+        email: user.email.value,
+        roles,
+        permissions,
+        iat: now,
+        exp: refreshExp,
+        jti: randomBytes(16).toString('hex'),
+      };
+      const refreshTokenString = this.signToken(refreshPayload);
+      const refreshTokenRes = RefreshToken.create(refreshTokenString);
       if (refreshTokenRes.isFailure) {
         return Promise.resolve(
           Result.fail(`Failed to create refresh token: ${refreshTokenRes.error}`),

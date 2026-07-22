@@ -43,3 +43,13 @@ export interface AuthenticationResponseDto {
 export interface RefreshTokenResponseDto {
   tokens: TokenResultDto;
 }
+
+export interface RegisterResponseDto {
+  user: UserDto;
+  requiresEmailVerification: boolean;
+}
+
+export interface ForgotPasswordResponseDto {
+  /** Always true — no account enumeration. */
+  sent: boolean;
+}

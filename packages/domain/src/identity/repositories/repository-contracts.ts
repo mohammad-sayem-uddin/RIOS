@@ -13,6 +13,7 @@ import { Permission } from '../entities/permission.js';
 import { RefreshTokenRecord } from '../entities/refresh-token-record.js';
 import { Role } from '../entities/role.js';
 import { Session } from '../entities/session.js';
+import { VerificationToken } from '../entities/verification-token.js';
 import {
   Email,
   PermissionId,
@@ -68,4 +69,24 @@ export interface IAuditLogRepository {
   findByUserId(userId: UserId, limit?: number, offset?: number): Promise<Result<AuditLogEntry[]>>;
   findByAction(action: string, limit?: number, offset?: number): Promise<Result<AuditLogEntry[]>>;
   countByUserId(userId: UserId): Promise<Result<number>>;
+}
+
+/**
+ * Persistence contract for single-use email-verification tokens.
+ * Implementations store only the token hash (never the raw token).
+ */
+export interface IEmailVerificationTokenRepository {
+  save(token: VerificationToken): Promise<Result<void>>;
+  findByTokenHash(tokenHash: string): Promise<Result<VerificationToken | null>>;
+  invalidateAllForUser(userId: UserId): Promise<Result<void>>;
+}
+
+/**
+ * Persistence contract for single-use password-reset tokens.
+ * Implementations store only the token hash (never the raw token).
+ */
+export interface IPasswordResetTokenRepository {
+  save(token: VerificationToken): Promise<Result<void>>;
+  findByTokenHash(tokenHash: string): Promise<Result<VerificationToken | null>>;
+  invalidateAllForUser(userId: UserId): Promise<Result<void>>;
 }

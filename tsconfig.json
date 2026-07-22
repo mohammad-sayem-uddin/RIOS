@@ -21,7 +21,8 @@
       "@rios/lib-config": ["./libs/config/src"],
       "@rios/lib-config/*": ["./libs/config/src/*"],
       "@rios/ui": ["./packages/ui/src"],
-      "@rios/ui/*": ["./packages/ui/src/*"]
+      "@rios/ui/*": ["./packages/ui/src/*"],
+      "@/*": ["./apps/frontend/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", "coverage", "archive", "tools"]

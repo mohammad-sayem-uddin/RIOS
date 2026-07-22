@@ -101,11 +101,17 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
     }
 
     // Reconstitute collections
-    const areas = persistence.areas.map((a) => this.reconstituteArea(a));
-    const questions = persistence.questions.map((q) => this.reconstituteQuestion(q));
-    const goals = persistence.goals.map((g) => this.reconstituteGoal(g));
-    const contributions = persistence.contributions.map((c) => this.reconstituteContribution(c));
-    const milestones = persistence.milestones.map((m) => this.reconstituteMilestone(m));
+    const areas = persistence.areas ? persistence.areas.map((a) => this.reconstituteArea(a)) : [];
+    const questions = persistence.questions
+      ? persistence.questions.map((q) => this.reconstituteQuestion(q))
+      : [];
+    const goals = persistence.goals ? persistence.goals.map((g) => this.reconstituteGoal(g)) : [];
+    const contributions = persistence.contributions
+      ? persistence.contributions.map((c) => this.reconstituteContribution(c))
+      : [];
+    const milestones = persistence.milestones
+      ? persistence.milestones.map((m) => this.reconstituteMilestone(m))
+      : [];
 
     // Reconstitute aggregate
     return ResearchIdentity.reconstitute({
@@ -120,8 +126,14 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
       goals,
       contributions,
       milestones,
-      createdAt: persistence.createdAt,
-      updatedAt: persistence.updatedAt,
+      createdAt:
+        typeof persistence.createdAt === 'string'
+          ? persistence.createdAt
+          : (persistence.createdAt as Date)?.toISOString?.() || new Date().toISOString(),
+      updatedAt:
+        typeof persistence.updatedAt === 'string'
+          ? persistence.updatedAt
+          : (persistence.updatedAt as Date)?.toISOString?.() || new Date().toISOString(),
     });
   }
 
@@ -277,23 +289,25 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
 
   // ─── Private: Load path (Persistence → Domain) ──────────────────────
 
-  private reconstituteVision(p: VisionPersistence): Result<ResearchVision> {
+  private reconstituteVision(p?: VisionPersistence): Result<ResearchVision> {
     try {
-      const statementResult = ResearchVisionStatement.create(p.visionStatement);
+      const statementStr = p?.visionStatement || 'Research Vision';
+      const horizonStr = p?.timeHorizon || '10 years';
+      const statementResult = ResearchVisionStatement.create(statementStr);
       if (statementResult.isFailure) {
         return Result.fail<ResearchVision>(statementResult.error);
       }
-      const timeHorizonResult = TimeHorizon.create(p.timeHorizon);
+      const timeHorizonResult = TimeHorizon.create(horizonStr);
       if (timeHorizonResult.isFailure) {
         return Result.fail<ResearchVision>(timeHorizonResult.error);
       }
 
       const vision = ResearchVision.reconstitute({
-        id: UniqueId.from(p.id),
+        id: UniqueId.from(p?.id || '00000000-0000-0000-0000-000000000001'),
         vision: statementResult.value,
         timeHorizon: timeHorizonResult.value,
-        lastRefinedAt: p.lastRefinedAt,
-        createdAt: p.createdAt,
+        lastRefinedAt: p?.lastRefinedAt || new Date().toISOString(),
+        createdAt: p?.createdAt || new Date().toISOString(),
       });
 
       return Result.ok(vision);
@@ -304,25 +318,27 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
     }
   }
 
-  private reconstituteAgenda(p: AgendaPersistence): Result<ResearchAgenda> {
+  private reconstituteAgenda(p?: AgendaPersistence): Result<ResearchAgenda> {
     try {
-      const focusResult = ResearchFocus.create(p.focus);
+      const focusStr = p?.focus || 'Research Focus';
+      const statusStr = p?.status || 'Active';
+      const focusResult = ResearchFocus.create(focusStr);
       if (focusResult.isFailure) {
         return Result.fail<ResearchAgenda>(focusResult.error);
       }
-      const statusResult = ResearchStatus.create(p.status);
+      const statusResult = ResearchStatus.create(statusStr);
       if (statusResult.isFailure) {
         return Result.fail<ResearchAgenda>(statusResult.error);
       }
 
       const agenda = ResearchAgenda.reconstitute({
-        id: UniqueId.from(p.id),
+        id: UniqueId.from(p?.id || '00000000-0000-0000-0000-000000000002'),
         focus: focusResult.value,
         status: statusResult.value,
-        areaIds: p.areaIds.map((id) => UniqueId.from(id)),
-        themes: [...p.themes],
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
+        areaIds: p?.areaIds ? p.areaIds.map((id) => UniqueId.from(id)) : [],
+        themes: p?.themes ? [...p.themes] : [],
+        createdAt: p?.createdAt || new Date().toISOString(),
+        updatedAt: p?.updatedAt || new Date().toISOString(),
       });
 
       return Result.ok(agenda);
@@ -333,14 +349,17 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
     }
   }
 
-  private reconstitutePhilosophy(p: PhilosophyPersistence): Result<ResearchPhilosophy> {
+  private reconstitutePhilosophy(p?: PhilosophyPersistence): Result<ResearchPhilosophy> {
     try {
+      const stmtResult = ResearchVisionStatement.create(p?.statement || 'PhD');
       const philosophy = ResearchPhilosophy.reconstitute({
-        id: UniqueId.from(p.id),
-        statement: p.statement as unknown as ResearchVisionStatement,
-        principles: [...p.principles],
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
+        id: UniqueId.from(p?.id || '00000000-0000-0000-0000-000000000003'),
+        statement: stmtResult.isSuccess
+          ? stmtResult.value
+          : (p?.statement as unknown as ResearchVisionStatement),
+        principles: p?.principles ? [...p.principles] : [],
+        createdAt: p?.createdAt || new Date().toISOString(),
+        updatedAt: p?.updatedAt || new Date().toISOString(),
       });
       return Result.ok(philosophy);
     } catch (error) {
@@ -350,14 +369,17 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
     }
   }
 
-  private reconstituteValues(p: ValuesPersistence): Result<ResearchValues> {
+  private reconstituteValues(p?: ValuesPersistence): Result<ResearchValues> {
     try {
+      const stmtResult = ResearchVisionStatement.create(p?.statement || 'Core values');
       const values = ResearchValues.reconstitute({
-        id: UniqueId.from(p.id),
-        statement: p.statement as unknown as ResearchVisionStatement,
-        values: [...p.values],
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
+        id: UniqueId.from(p?.id || '00000000-0000-0000-0000-000000000004'),
+        statement: stmtResult.isSuccess
+          ? stmtResult.value
+          : (p?.statement as unknown as ResearchVisionStatement),
+        values: p?.values ? [...p.values] : [],
+        createdAt: p?.createdAt || new Date().toISOString(),
+        updatedAt: p?.updatedAt || new Date().toISOString(),
       });
       return Result.ok(values);
     } catch (error) {
@@ -367,26 +389,32 @@ export class ResearchIdentityAggregateMapper implements AggregateMapper<
     }
   }
 
-  private reconstituteEvolution(p: EvolutionPersistence): Result<ResearchEvolution> {
+  private reconstituteEvolution(p?: EvolutionPersistence): Result<ResearchEvolution> {
     try {
-      const confidenceResult = ConfidenceLevel.create(p.confidence);
+      const confidence = p?.confidence ?? 3;
+      const statusStr = p?.status || 'Active';
+      const confidenceResult = ConfidenceLevel.create(confidence);
       if (confidenceResult.isFailure) {
         return Result.fail<ResearchEvolution>(confidenceResult.error);
       }
 
-      const statusResult = ResearchStatus.create(p.status);
+      const statusResult = ResearchStatus.create(statusStr);
       if (statusResult.isFailure) {
         return Result.fail<ResearchEvolution>(statusResult.error);
       }
 
+      const focusResult = ResearchFocus.create(p?.description || 'Initial establishment');
+
       const evolution = ResearchEvolution.reconstitute({
-        id: UniqueId.from(p.id),
-        description: p.description as unknown as ResearchFocus,
+        id: UniqueId.from(p?.id || '00000000-0000-0000-0000-000000000005'),
+        description: focusResult.isSuccess
+          ? focusResult.value
+          : (p?.description as unknown as ResearchFocus),
         status: statusResult.value,
         confidence: confidenceResult.value,
-        milestoneIds: p.milestoneIds.map((id) => UniqueId.from(id)),
-        recordedAt: p.recordedAt,
-        createdAt: p.createdAt,
+        milestoneIds: p?.milestoneIds ? p.milestoneIds.map((id) => UniqueId.from(id)) : [],
+        recordedAt: p?.recordedAt || new Date().toISOString(),
+        createdAt: p?.createdAt || new Date().toISOString(),
       });
       return Result.ok(evolution);
     } catch (error) {

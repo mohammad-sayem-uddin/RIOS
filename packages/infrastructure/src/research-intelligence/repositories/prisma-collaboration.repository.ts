@@ -109,6 +109,14 @@ export class PrismaCollaborationRepository implements ICollaborationRepository {
     profileId: string,
     context?: TransactionContext,
   ): Promise<CollaborationNetwork | null> {
+    if (
+      !profileId ||
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        profileId,
+      )
+    ) {
+      return null;
+    }
     const client = this.getClient(context);
     const raw = await client.collaborationNetworkModel.findFirst({
       where: { profileId },

@@ -64,3 +64,31 @@ export interface IAuthenticationService {
   refreshTokens(refreshTokenStr: string): Promise<Result<IssuedTokens>>;
   logout(sessionIdStr: string): Promise<Result<void>>;
 }
+
+/** A freshly minted opaque token: the raw value (emailed) and its stored hash. */
+export interface GeneratedToken {
+  /** Raw token — placed in the email link, never persisted. */
+  rawToken: string;
+  /** SHA-256 hash of the raw token — the only value persisted. */
+  tokenHash: string;
+}
+
+/**
+ * Generates cryptographically-random single-use tokens and hashes raw tokens
+ * for constant-time lookup. Used by email-verification and password-reset flows.
+ */
+export interface IVerificationTokenGenerator {
+  generate(): GeneratedToken;
+  hash(rawToken: string): string;
+}
+
+export type AccountEmailKind = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+
+/**
+ * Sends transactional account emails. In development the implementation may log
+ * the link instead of dispatching a real message.
+ */
+export interface IAccountEmailNotifier {
+  sendEmailVerification(toEmail: string, rawToken: string): Promise<Result<void>>;
+  sendPasswordReset(toEmail: string, rawToken: string): Promise<Result<void>>;
+}

@@ -3,7 +3,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: './tsconfig.json',
+    project: ['./tsconfig.json', './apps/*/tsconfig.json', './packages/*/tsconfig.json'],
     tsconfigRootDir: __dirname,
     ecmaVersion: 2022,
     sourceType: 'module',
@@ -58,7 +58,7 @@ module.exports = {
     'import/resolver': {
       typescript: {
         alwaysTryTypes: true,
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './apps/*/tsconfig.json', './packages/*/tsconfig.json'],
       },
     },
   },
@@ -67,6 +67,8 @@ module.exports = {
     'dist/',
     'coverage/',
     '.turbo/',
+    '.next/',
+    'next-env.d.ts',
     'archive/',
     '*.js',
     '!.eslintrc.js',

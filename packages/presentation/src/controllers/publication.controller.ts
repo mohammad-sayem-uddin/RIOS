@@ -24,7 +24,25 @@ export class PublicationController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const dto = req.body as CreatePublicationApiRequestDto;
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const profileId =
+        (typeof body['profileId'] === 'string' && body['profileId'].trim() !== ''
+          ? body['profileId'].trim()
+          : req.user?.userId) || '00000000-0000-0000-0000-000000000000';
+      const type =
+        typeof body['type'] === 'string' && body['type'].trim() !== ''
+          ? body['type'].trim()
+          : typeof body['publicationType'] === 'string' && body['publicationType'].trim() !== ''
+            ? body['publicationType'].trim()
+            : 'JOURNAL_ARTICLE';
+
+      const dto: CreatePublicationApiRequestDto = {
+        ...body,
+        profileId,
+        title: typeof body['title'] === 'string' ? body['title'] : '',
+        type,
+      };
+
       const result = await this.service.createPublication(dto);
       ResultHttpMapper.mapResult(res, result, 201, req.context?.correlationId);
     } catch (err) {

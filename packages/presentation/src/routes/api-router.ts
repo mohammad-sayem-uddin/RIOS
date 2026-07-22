@@ -49,6 +49,9 @@ export class ApiRouter {
     router.get('/health', healthController.getHealth);
     router.get('/health/live', healthController.getLiveness);
     router.get('/health/ready', healthController.getReadiness);
+    router.get(`${versionPrefix}/health`, healthController.getHealth);
+    router.get(`${versionPrefix}/health/live`, healthController.getLiveness);
+    router.get(`${versionPrefix}/health/ready`, healthController.getReadiness);
 
     // ——— Swagger Documentation Endpoints ———
     const spec = SwaggerGenerator.generateSpec();

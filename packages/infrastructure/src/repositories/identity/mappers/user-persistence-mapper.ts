@@ -17,6 +17,7 @@ export interface PrismaUserWithRoles {
   passwordHash: string;
   displayName: string | null;
   status: string;
+  emailVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -80,6 +81,7 @@ export class UserPersistenceMapper {
         roles,
         displayName: record.displayName ?? record.email.split('@')[0],
         status,
+        emailVerified: record.emailVerified ?? true,
         createdAt: record.createdAt,
         updatedAt: record.updatedAt,
       },
@@ -94,6 +96,7 @@ export class UserPersistenceMapper {
       passwordHash: user.credential.passwordHash.value,
       displayName: user.displayName,
       status: user.status,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       deletedAt: null,

@@ -52,7 +52,10 @@ export class RequestMapper {
       agendaStatus: 'Active',
       philosophyStatement: dto.stage,
       philosophyApproach: dto.primaryFocus,
-      valuesStatement: (dto.values?.corePrinciples ?? []).join(', '),
+      valuesStatement:
+        dto.values?.corePrinciples && dto.values.corePrinciples.length > 0
+          ? dto.values.corePrinciples.join(', ')
+          : dto.visionStatement,
       evolutionDescription: 'Initial establishment',
       evolutionStatus: 'Active',
     });

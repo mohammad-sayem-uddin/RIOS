@@ -52,16 +52,7 @@ export interface ResearchIdentityQueryParams {
  * Default include clause for loading the full aggregate with all owned entities.
  */
 const FULL_AGGREGATE_INCLUDE: Record<string, boolean> = {
-  vision: true,
-  agenda: true,
-  philosophy: true,
-  values: true,
-  evolution: true,
-  areas: true,
-  questions: true,
-  goals: true,
-  contributions: true,
-  milestones: true,
+  user: true,
 };
 
 /**
@@ -129,17 +120,10 @@ export class ResearchIdentitySpecificationTranslator implements SpecificationTra
     return {
       where: {
         OR: [
-          { vision: { is: { visionStatement: { contains: term, mode: 'insensitive' } } } },
-          { agenda: { is: { focus: { contains: term, mode: 'insensitive' } } } },
-          { philosophy: { is: { statement: { contains: term, mode: 'insensitive' } } } },
-          { values: { is: { statement: { contains: term, mode: 'insensitive' } } } },
-          { evolution: { is: { description: { contains: term, mode: 'insensitive' } } } },
-          { areas: { some: { name: { contains: term, mode: 'insensitive' } } } },
-          { areas: { some: { description: { contains: term, mode: 'insensitive' } } } },
-          { questions: { some: { question: { contains: term, mode: 'insensitive' } } } },
-          { goals: { some: { description: { contains: term, mode: 'insensitive' } } } },
-          { contributions: { some: { title: { contains: term, mode: 'insensitive' } } } },
-          { contributions: { some: { description: { contains: term, mode: 'insensitive' } } } },
+          { title: { contains: term, mode: 'insensitive' } },
+          { statement: { contains: term, mode: 'insensitive' } },
+          { researchAreas: { contains: term, mode: 'insensitive' } },
+          { researchGoals: { contains: term, mode: 'insensitive' } },
         ],
       },
       include: FULL_AGGREGATE_INCLUDE,

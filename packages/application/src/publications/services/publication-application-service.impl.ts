@@ -415,6 +415,21 @@ export class PublicationApplicationServiceImpl implements PublicationApplication
         members.push(memberRes.value);
       }
 
+      if (!members.some((m) => m.role.isPI())) {
+        const piRoleRes = ProjectRole.create('PRINCIPAL_INVESTIGATOR');
+        if (piRoleRes.isSuccess) {
+          const piMemberRes = ProjectMember.create({
+            profileId: dto.profileId,
+            name: 'Principal Investigator',
+            role: piRoleRes.value,
+            startDate,
+          });
+          if (piMemberRes.isSuccess) {
+            members.unshift(piMemberRes.value);
+          }
+        }
+      }
+
       const projectRes = ResearchProject.create({
         profileId,
         title: dto.title,

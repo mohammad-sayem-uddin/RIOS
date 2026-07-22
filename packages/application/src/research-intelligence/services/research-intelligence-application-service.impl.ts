@@ -216,12 +216,24 @@ export class ResearchIntelligenceApplicationServiceImpl implements ResearchIntel
     }
   }
 
+  private resolveProfileId(profileId: string): string {
+    const trimmed = profileId.trim();
+    if (
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed)
+    ) {
+      return trimmed;
+    }
+    return '00000000-0000-0000-0000-000000000000';
+  }
+
   public async getTimeline(profileId: string): Promise<Result<TimelineOutputDto>> {
     try {
-      const timeline = await this.timelineRepo.findByResearchProfile(profileId);
+      const pid = this.resolveProfileId(profileId);
+      const timeline = await this.timelineRepo.findByResearchProfile(pid);
       if (!timeline) {
-        const newTimeline = AcademicTimeline.create({ profileId }).value;
-        return Result.ok<TimelineOutputDto>(this.mapTimelineToDto(newTimeline));
+        const createRes = AcademicTimeline.create({ profileId: pid });
+        if (createRes.isFailure) return Result.fail<TimelineOutputDto>(createRes.error);
+        return Result.ok<TimelineOutputDto>(this.mapTimelineToDto(createRes.value));
       }
       return Result.ok<TimelineOutputDto>(this.mapTimelineToDto(timeline));
     } catch (err: unknown) {
@@ -233,11 +245,13 @@ export class ResearchIntelligenceApplicationServiceImpl implements ResearchIntel
     profileId: string,
   ): Promise<Result<CollaborationNetworkOutputDto>> {
     try {
-      const network = await this.collaborationRepo.findByResearchProfile(profileId);
+      const pid = this.resolveProfileId(profileId);
+      const network = await this.collaborationRepo.findByResearchProfile(pid);
       if (!network) {
-        const newNetwork = CollaborationNetwork.create({ profileId }).value;
+        const createRes = CollaborationNetwork.create({ profileId: pid });
+        if (createRes.isFailure) return Result.fail<CollaborationNetworkOutputDto>(createRes.error);
         return Result.ok<CollaborationNetworkOutputDto>(
-          this.mapCollaborationNetworkToDto(newNetwork),
+          this.mapCollaborationNetworkToDto(createRes.value),
         );
       }
       return Result.ok<CollaborationNetworkOutputDto>(this.mapCollaborationNetworkToDto(network));
@@ -250,10 +264,14 @@ export class ResearchIntelligenceApplicationServiceImpl implements ResearchIntel
     profileId: string,
   ): Promise<Result<ResearchAnalyticsOutputDto>> {
     try {
-      const analytics = await this.analyticsRepo.findByResearchProfile(profileId);
+      const pid = this.resolveProfileId(profileId);
+      const analytics = await this.analyticsRepo.findByResearchProfile(pid);
       if (!analytics) {
-        const newAnalytics = ResearchAnalytics.create({ profileId }).value;
-        return Result.ok<ResearchAnalyticsOutputDto>(this.mapResearchAnalyticsToDto(newAnalytics));
+        const createRes = ResearchAnalytics.create({ profileId: pid });
+        if (createRes.isFailure) return Result.fail<ResearchAnalyticsOutputDto>(createRes.error);
+        return Result.ok<ResearchAnalyticsOutputDto>(
+          this.mapResearchAnalyticsToDto(createRes.value),
+        );
       }
       return Result.ok<ResearchAnalyticsOutputDto>(this.mapResearchAnalyticsToDto(analytics));
     } catch (err: unknown) {

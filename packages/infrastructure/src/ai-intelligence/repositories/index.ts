@@ -89,6 +89,14 @@ export class PrismaKnowledgeGraphRepository implements IKnowledgeGraphRepository
   }
 
   public async findByResearchProfile(profileId: string): Promise<KnowledgeGraph | null> {
+    if (
+      !profileId ||
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        profileId,
+      )
+    ) {
+      return null;
+    }
     const raw = await this.prisma.knowledgeGraphModel.findFirst({
       where: { profileId },
       include: { nodes: true, edges: true },
@@ -181,6 +189,7 @@ export class PrismaEmbeddingRepository implements IEmbeddingRepository {
     entityId: string,
     entityType: string,
   ): Promise<ResearchEmbedding | null> {
+    if (!entityId || entityId.trim().length === 0) return null;
     const raw = await this.prisma.researchEmbeddingModel.findFirst({
       where: { entityId, entityType },
       include: { vectors: true },
@@ -286,6 +295,14 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
   }
 
   public async findByResearchProfile(profileId: string): Promise<RecommendationEngine | null> {
+    if (
+      !profileId ||
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        profileId,
+      )
+    ) {
+      return null;
+    }
     const raw = await this.prisma.recommendationEngineModel.findFirst({
       where: { researcherProfileId: profileId },
       include: { recommendations: true },

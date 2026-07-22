@@ -34,6 +34,10 @@ export const DITokens = {
   PermissionRepository: Symbol.for('PermissionRepository'),
   RefreshTokenRepository: Symbol.for('RefreshTokenRepository'),
   AuditLogRepository: Symbol.for('AuditLogRepository'),
+  EmailVerificationTokenRepository: Symbol.for('EmailVerificationTokenRepository'),
+  PasswordResetTokenRepository: Symbol.for('PasswordResetTokenRepository'),
+  VerificationTokenGenerator: Symbol.for('VerificationTokenGenerator'),
+  AccountEmailNotifier: Symbol.for('AccountEmailNotifier'),
 
   JwtTokenProvider: Symbol.for('JwtTokenProvider'),
   PasswordHasher: Symbol.for('PasswordHasher'),

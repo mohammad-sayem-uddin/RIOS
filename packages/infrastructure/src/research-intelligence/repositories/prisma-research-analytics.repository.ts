@@ -136,6 +136,14 @@ export class PrismaResearchAnalyticsRepository implements IResearchAnalyticsRepo
     profileId: string,
     context?: TransactionContext,
   ): Promise<ResearchAnalytics | null> {
+    if (
+      !profileId ||
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+        profileId,
+      )
+    ) {
+      return null;
+    }
     const client = this.getClient(context);
     const raw = await client.researchAnalyticsModel.findFirst({
       where: { profileId },

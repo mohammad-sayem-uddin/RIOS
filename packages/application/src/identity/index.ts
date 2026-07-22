@@ -9,6 +9,8 @@ export type {
   TokenResultDto,
   AuthenticationResponseDto,
   RefreshTokenResponseDto,
+  RegisterResponseDto,
+  ForgotPasswordResponseDto,
 } from './dto/identity-application-dtos.js';
 
 // Mappers

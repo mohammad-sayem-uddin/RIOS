@@ -1,13 +1,13 @@
 {
   "name": "rios",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "description": "Research Identity Operating System (RIOS)",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
   },
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "build": "turbo run build",
     "build:packages": "turbo run build --filter='./packages/*'",
@@ -32,6 +32,8 @@
     "@changesets/cli": "^2.27.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^3.2.0",
+    "@vitest/ui": "^3.2.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.0",
@@ -41,11 +43,10 @@
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.3.0",
+    "tsx": "^4.23.1",
     "turbo": "^2.3.0",
     "typescript": "^5.6.0",
-    "vitest": "^3.2.0",
-    "@vitest/coverage-v8": "^3.2.0",
-    "@vitest/ui": "^3.2.0"
+    "vitest": "^3.2.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

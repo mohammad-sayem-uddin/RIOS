@@ -35,7 +35,20 @@ export class AiIntelligenceController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const command = req.body as GenerateRecommendationsCommand;
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const profileId =
+        typeof body['profileId'] === 'string' && body['profileId'].trim() !== ''
+          ? body['profileId'].trim()
+          : typeof body['researcherProfileId'] === 'string' &&
+              body['researcherProfileId'].trim() !== ''
+            ? body['researcherProfileId'].trim()
+            : req.user?.userId || '00000000-0000-0000-0000-000000000000';
+
+      const command: GenerateRecommendationsCommand = {
+        ...body,
+        profileId,
+      };
+
       const result = await this.service.generateRecommendations(command);
       ResultHttpMapper.mapResult(res, result, 201, req.context?.correlationId);
     } catch (error) {
@@ -50,7 +63,10 @@ export class AiIntelligenceController {
   ): Promise<void> => {
     try {
       const profileId =
-        (req.query['profileId'] as string) || (req.query['researcherProfileId'] as string) || '';
+        (req.query['profileId'] as string) ||
+        (req.query['researcherProfileId'] as string) ||
+        req.user?.userId ||
+        '';
       const typeStr = typeof req.query['type'] === 'string' ? req.query['type'] : undefined;
       const typeEnum =
         typeStr !== undefined && typeStr.trim().length > 0
@@ -71,7 +87,10 @@ export class AiIntelligenceController {
   ): Promise<void> => {
     try {
       const profileId =
-        (req.query['profileId'] as string) || (req.query['researcherProfileId'] as string) || '';
+        (req.query['profileId'] as string) ||
+        (req.query['researcherProfileId'] as string) ||
+        req.user?.userId ||
+        '';
       const limitStr = typeof req.query['limit'] === 'string' ? req.query['limit'] : undefined;
       const limit =
         limitStr !== undefined && limitStr.trim().length > 0 ? parseInt(limitStr, 10) : 5;
@@ -122,7 +141,10 @@ export class AiIntelligenceController {
   ): Promise<void> => {
     try {
       const profileId =
-        (req.query['profileId'] as string) || (req.query['researcherProfileId'] as string) || '';
+        (req.query['profileId'] as string) ||
+        (req.query['researcherProfileId'] as string) ||
+        req.user?.userId ||
+        '';
       const result = await this.service.getKnowledgeGraph(profileId);
       ResultHttpMapper.mapResult(res, result, 200, req.context?.correlationId);
     } catch (error) {

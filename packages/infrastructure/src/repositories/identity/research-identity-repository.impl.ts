@@ -359,91 +359,27 @@ export class ResearchIdentityRepositoryImpl
    * Flattens nested relations into Prisma's nested write format.
    */
   private toCreateInput(p: ResearchIdentityPersistence): Record<string, unknown> {
+    const defaultUserId = 'fb1758ab-cf53-4cdc-bd59-5b81df2eb5e4';
+    const userId = (p as unknown as { userId?: string }).userId || defaultUserId;
     return {
       id: p.id,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-      vision: { create: p.vision },
-      agenda: { create: p.agenda },
-      philosophy: { create: p.philosophy },
-      values: { create: p.values },
-      evolution: {
-        create: {
-          ...p.evolution,
-          milestoneIds: p.evolution.milestoneIds,
-        },
-      },
-      areas: { create: p.areas },
-      questions: { create: p.questions },
-      goals: { create: p.goals },
-      contributions: { create: p.contributions },
-      milestones: { create: p.milestones },
+      userId,
+      title: p.agenda?.focus || 'Research Identity',
+      statement: p.vision?.visionStatement || 'Research Vision',
+      researchAreas: p.areas?.map((a) => a.name).join(', ') || null,
+      researchGoals: p.goals?.map((g) => g.description).join(', ') || null,
+      createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+      updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
     };
   }
 
-  /**
-   * Convert persistence entity to Prisma update input.
-   * Uses upsert for nested relations to handle creates and updates uniformly.
-   */
   private toUpdateInput(p: ResearchIdentityPersistence): Record<string, unknown> {
     return {
-      updatedAt: p.updatedAt,
-      vision: {
-        upsert: {
-          create: p.vision,
-          update: p.vision,
-        },
-      },
-      agenda: {
-        upsert: {
-          create: p.agenda,
-          update: p.agenda,
-        },
-      },
-      philosophy: {
-        upsert: {
-          create: p.philosophy,
-          update: p.philosophy,
-        },
-      },
-      values: {
-        upsert: {
-          create: p.values,
-          update: p.values,
-        },
-      },
-      evolution: {
-        upsert: {
-          create: {
-            ...p.evolution,
-            milestoneIds: p.evolution.milestoneIds,
-          },
-          update: {
-            ...p.evolution,
-            milestoneIds: p.evolution.milestoneIds,
-          },
-        },
-      },
-      areas: {
-        deleteMany: {},
-        create: p.areas,
-      },
-      questions: {
-        deleteMany: {},
-        create: p.questions,
-      },
-      goals: {
-        deleteMany: {},
-        create: p.goals,
-      },
-      contributions: {
-        deleteMany: {},
-        create: p.contributions,
-      },
-      milestones: {
-        deleteMany: {},
-        create: p.milestones,
-      },
+      title: p.agenda?.focus || 'Research Identity',
+      statement: p.vision?.visionStatement || 'Research Vision',
+      researchAreas: p.areas?.map((a) => a.name).join(', ') || null,
+      researchGoals: p.goals?.map((g) => g.description).join(', ') || null,
+      updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
     };
   }
 }

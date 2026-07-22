@@ -20,20 +20,33 @@ export class ResearchIntelligenceController {
   constructor(private readonly service: ResearchIntelligenceApplicationService) {}
 
   private extractProfileId(req: Request): string {
-    if (typeof req.query['profileId'] === 'string') {
-      return req.query['profileId'];
-    }
-    if (typeof req.params['profileId'] === 'string') {
-      return req.params['profileId'];
-    }
+    const fromQuery =
+      typeof req.query['profileId'] === 'string' ? req.query['profileId'].trim() : '';
+    if (fromQuery.length > 0) return fromQuery;
+
+    const fromParams =
+      typeof req.params['profileId'] === 'string' ? req.params['profileId'].trim() : '';
+    if (fromParams.length > 0) return fromParams;
+
     if (
       req.body !== null &&
       typeof req.body === 'object' &&
       'profileId' in req.body &&
       typeof (req.body as { profileId?: unknown }).profileId === 'string'
     ) {
-      return (req.body as { profileId: string }).profileId;
+      const fromBody = (req.body as { profileId: string }).profileId.trim();
+      if (fromBody.length > 0) return fromBody;
     }
+
+    if (req.user?.userId) {
+      return req.user.userId;
+    }
+
+    const legacyUser = (req as unknown as { user?: { id?: string } }).user;
+    if (legacyUser?.id) {
+      return legacyUser.id;
+    }
+
     return '';
   }
 

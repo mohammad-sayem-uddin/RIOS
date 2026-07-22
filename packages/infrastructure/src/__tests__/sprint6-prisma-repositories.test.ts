@@ -51,6 +51,10 @@ interface MockPrismaClient {
     }) => Promise<Record<string, unknown>>;
     delete: ({ where }: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
   };
+  userRole: {
+    deleteMany: (args?: { where?: Record<string, unknown> }) => Promise<{ count: number }>;
+    createMany: (args: { data: unknown[] }) => Promise<{ count: number }>;
+  };
   role: {
     findUnique: ({ where }: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
     findFirst: ({ where }: { where: { name?: string } }) => Promise<Record<string, unknown> | null>;
@@ -199,6 +203,12 @@ function createMockPrismaClient(): MockPrismaClient {
         users.delete(where.id);
         return Promise.resolve(rec);
       },
+    },
+
+    userRole: {
+      deleteMany: (): Promise<{ count: number }> => Promise.resolve({ count: 0 }),
+      createMany: ({ data }: { data: unknown[] }): Promise<{ count: number }> =>
+        Promise.resolve({ count: Array.isArray(data) ? data.length : 0 }),
     },
 
     role: {

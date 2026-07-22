@@ -7,23 +7,32 @@
 
 import {
   AccessToken,
+  Credential,
   Email,
+  IAccountEmailNotifier,
   IAuthorizationService,
+  IEmailVerificationTokenRepository,
   IPasswordHasher,
+  IPasswordResetTokenRepository,
   ISessionRepository,
   ITokenProvider,
   IUserRepository,
+  IVerificationTokenGenerator,
+  IRoleRepository,
   RefreshToken,
+  Role,
   Session,
   SessionId,
   User,
   UserId,
+  VerificationToken,
 } from '@rios/domain';
 import { Result } from '@rios/shared';
 
 import {
   AuthenticationResponseDto,
   RefreshTokenResponseDto,
+  RegisterResponseDto,
   SessionDto,
 } from '../dto/identity-application-dtos.js';
 import { IdentityDtoMapper } from '../mappers/identity-dto-mapper.js';
@@ -34,6 +43,11 @@ export class AuthenticationApplicationService {
     private readonly sessionRepository: ISessionRepository,
     private readonly passwordHasher: IPasswordHasher,
     private readonly tokenProvider: ITokenProvider,
+    private readonly roleRepository?: IRoleRepository,
+    private readonly emailVerificationTokenRepository?: IEmailVerificationTokenRepository,
+    private readonly passwordResetTokenRepository?: IPasswordResetTokenRepository,
+    private readonly verificationTokenGenerator?: IVerificationTokenGenerator,
+    private readonly emailNotifier?: IAccountEmailNotifier,
   ) {}
 
   public async authenticate(
@@ -55,6 +69,10 @@ export class AuthenticationApplicationService {
     const user = userRes.value;
     if (!user.canAuthenticate()) {
       return Result.fail('Account is disabled or locked');
+    }
+
+    if (!user.emailVerified) {
+      return Result.fail('AUTH_EMAIL_NOT_VERIFIED');
     }
 
     const verifyRes = await this.passwordHasher.verify(passwordStr, user.credential.passwordHash);
@@ -158,6 +176,260 @@ export class AuthenticationApplicationService {
     const session = sessionRes.value;
     session.revoke();
     await this.sessionRepository.save(session);
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Register a new user account. Creates the user with PENDING status and
+   * sends an email-verification link. Returns requiresEmailVerification: true
+   * so the frontend routes to the verify-email screen.
+   */
+  public async register(
+    emailStr: string,
+    passwordStr: string,
+    displayName?: string,
+  ): Promise<Result<RegisterResponseDto>> {
+    const emailRes = Email.create(emailStr);
+    if (emailRes.isFailure) {
+      return Result.fail(emailRes.error);
+    }
+
+    const existsRes = await this.userRepository.exists(emailRes.value);
+    if (existsRes.isFailure) {
+      return Result.fail(existsRes.error);
+    }
+    if (existsRes.value) {
+      return Result.fail('AUTH_EMAIL_IN_USE');
+    }
+
+    if (!passwordStr || passwordStr.length < 8) {
+      return Result.fail('Password must be at least 8 characters long');
+    }
+    if (!/[a-z]/.test(passwordStr) || !/[A-Z]/.test(passwordStr) || !/[0-9]/.test(passwordStr)) {
+      return Result.fail('Password must contain uppercase, lowercase, and a number');
+    }
+
+    const hashRes = await this.passwordHasher.hash(passwordStr);
+    if (hashRes.isFailure) {
+      return Result.fail(hashRes.error);
+    }
+
+    const credentialRes = Credential.create({ passwordHash: hashRes.value });
+    if (credentialRes.isFailure) {
+      return Result.fail(credentialRes.error);
+    }
+
+    // Resolve default role
+    let role: Role | undefined;
+    if (this.roleRepository) {
+      const roleRes = await this.roleRepository.findByName('researcher');
+      if (roleRes.isSuccess && roleRes.value) {
+        role = roleRes.value;
+      }
+    }
+    if (!role) {
+      const fallbackRes = Role.create({
+        name: 'researcher',
+        description: 'Default Researcher Role',
+      });
+      if (fallbackRes.isFailure) return Result.fail(fallbackRes.error);
+      role = fallbackRes.value;
+    }
+
+    const userRes = User.create({
+      email: emailRes.value,
+      credential: credentialRes.value,
+      roles: [role],
+      displayName,
+      emailVerified: false,
+    });
+    if (userRes.isFailure) return Result.fail(userRes.error);
+
+    const user = userRes.value;
+    const saveRes = await this.userRepository.save(user);
+    if (saveRes.isFailure) return Result.fail(saveRes.error);
+
+    // Issue and persist email-verification token
+    if (this.verificationTokenGenerator && this.emailVerificationTokenRepository) {
+      const generated = this.verificationTokenGenerator.generate();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
+      const tokenRes = VerificationToken.create({
+        userId: user.userId,
+        tokenHash: generated.tokenHash,
+        expiresAt,
+      });
+      if (tokenRes.isSuccess) {
+        await this.emailVerificationTokenRepository.save(tokenRes.value);
+        if (this.emailNotifier) {
+          await this.emailNotifier.sendEmailVerification(emailStr, generated.rawToken);
+        }
+      }
+    }
+
+    return Result.ok({
+      user: IdentityDtoMapper.toUserDto(user),
+      requiresEmailVerification: true,
+    });
+  }
+
+  /**
+   * Initiate a password-reset flow. Always returns success to prevent account
+   * enumeration — if the email is unknown the response is identical.
+   */
+  public async forgotPassword(emailStr: string): Promise<Result<void>> {
+    const emailRes = Email.create(emailStr);
+    if (emailRes.isFailure) {
+      return Result.ok(undefined); // no enumeration
+    }
+
+    const userRes = await this.userRepository.findByEmail(emailRes.value);
+    if (userRes.isFailure || !userRes.value) {
+      return Result.ok(undefined); // no enumeration
+    }
+
+    const user = userRes.value;
+
+    if (this.verificationTokenGenerator && this.passwordResetTokenRepository) {
+      const generated = this.verificationTokenGenerator.generate();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 h
+      const tokenRes = VerificationToken.create({
+        userId: user.userId,
+        tokenHash: generated.tokenHash,
+        expiresAt,
+      });
+      if (tokenRes.isSuccess) {
+        await this.passwordResetTokenRepository.invalidateAllForUser(user.userId);
+        await this.passwordResetTokenRepository.save(tokenRes.value);
+        if (this.emailNotifier) {
+          await this.emailNotifier.sendPasswordReset(emailStr, generated.rawToken);
+        }
+      }
+    }
+
+    return Result.ok(undefined);
+  }
+
+  /** Complete a password reset using the token from the email link. */
+  public async resetPassword(rawToken: string, newPasswordStr: string): Promise<Result<void>> {
+    if (!rawToken || rawToken.trim() === '') {
+      return Result.fail('Reset token is required');
+    }
+    if (!newPasswordStr || newPasswordStr.length < 8) {
+      return Result.fail('Password must be at least 8 characters long');
+    }
+    if (
+      !/[a-z]/.test(newPasswordStr) ||
+      !/[A-Z]/.test(newPasswordStr) ||
+      !/[0-9]/.test(newPasswordStr)
+    ) {
+      return Result.fail('Password must contain uppercase, lowercase, and a number');
+    }
+
+    if (!this.verificationTokenGenerator || !this.passwordResetTokenRepository) {
+      return Result.fail('Password reset is not configured');
+    }
+
+    const tokenHash = this.verificationTokenGenerator.hash(rawToken.trim());
+    const tokenRes = await this.passwordResetTokenRepository.findByTokenHash(tokenHash);
+    if (tokenRes.isFailure || !tokenRes.value) {
+      return Result.fail('Invalid or expired reset token');
+    }
+
+    const token = tokenRes.value;
+    if (!token.isUsable()) {
+      return Result.fail('Invalid or expired reset token');
+    }
+
+    const userRes = await this.userRepository.findById(token.userId);
+    if (userRes.isFailure || !userRes.value) {
+      return Result.fail('User not found');
+    }
+
+    const user = userRes.value;
+    const hashRes = await this.passwordHasher.hash(newPasswordStr);
+    if (hashRes.isFailure) return Result.fail(hashRes.error);
+
+    const changeRes = user.changePassword(hashRes.value);
+    if (changeRes.isFailure) return Result.fail(changeRes.error);
+
+    token.consume();
+    await this.passwordResetTokenRepository.save(token);
+    await this.userRepository.save(user);
+    await this.sessionRepository.revokeAllForUser(user.userId);
+
+    return Result.ok(undefined);
+  }
+
+  /** Verify an email address using the token from the verification link. */
+  public async verifyEmail(rawToken: string): Promise<Result<void>> {
+    if (!rawToken || rawToken.trim() === '') {
+      return Result.fail('Verification token is required');
+    }
+
+    if (!this.verificationTokenGenerator || !this.emailVerificationTokenRepository) {
+      return Result.fail('Email verification is not configured');
+    }
+
+    const tokenHash = this.verificationTokenGenerator.hash(rawToken.trim());
+    const tokenRes = await this.emailVerificationTokenRepository.findByTokenHash(tokenHash);
+    if (tokenRes.isFailure || !tokenRes.value) {
+      return Result.fail('Invalid or expired verification token');
+    }
+
+    const token = tokenRes.value;
+    if (!token.isUsable()) {
+      return Result.fail('Invalid or expired verification token');
+    }
+
+    const userRes = await this.userRepository.findById(token.userId);
+    if (userRes.isFailure || !userRes.value) {
+      return Result.fail('User not found');
+    }
+
+    const user = userRes.value;
+    user.verifyEmail();
+    token.consume();
+
+    await this.emailVerificationTokenRepository.save(token);
+    await this.userRepository.save(user);
+
+    return Result.ok(undefined);
+  }
+
+  /** Resend the email-verification link. Rate-limiting is enforced at the HTTP layer. */
+  public async resendVerification(emailStr: string): Promise<Result<void>> {
+    const emailRes = Email.create(emailStr);
+    if (emailRes.isFailure) {
+      return Result.ok(undefined); // no enumeration
+    }
+
+    const userRes = await this.userRepository.findByEmail(emailRes.value);
+    if (userRes.isFailure || !userRes.value) {
+      return Result.ok(undefined); // no enumeration
+    }
+
+    const user = userRes.value;
+    if (user.emailVerified) {
+      return Result.ok(undefined); // already verified — silent success
+    }
+
+    if (this.verificationTokenGenerator && this.emailVerificationTokenRepository) {
+      const generated = this.verificationTokenGenerator.generate();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const tokenRes = VerificationToken.create({
+        userId: user.userId,
+        tokenHash: generated.tokenHash,
+        expiresAt,
+      });
+      if (tokenRes.isSuccess) {
+        await this.emailVerificationTokenRepository.invalidateAllForUser(user.userId);
+        await this.emailVerificationTokenRepository.save(tokenRes.value);
+        if (this.emailNotifier) {
+          await this.emailNotifier.sendEmailVerification(emailStr, generated.rawToken);
+        }
+      }
+    }
+
     return Result.ok(undefined);
   }
 }

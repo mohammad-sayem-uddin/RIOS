@@ -1,0 +1,286 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * RIOS Design System — CSS Custom Properties
+ *
+ * Professional academic color palette using HSL.
+ * Inspired by Linear, GitHub, and Google Scholar aesthetics.
+ * Indigo primary with slate neutrals for an academic, trustworthy feel.
+ */
+
+@layer base {
+  :root {
+    /* Background & Foreground */
+    --background: 0 0% 100%;
+    --foreground: 224 12% 10%;
+
+    /* Card & Popover */
+    --card: 0 0% 100%;
+    --card-foreground: 224 12% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 12% 10%;
+
+    /* Primary — Indigo */
+    --primary: 234 89% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary — Slate */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 12% 10%;
+
+    /* Muted */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Accent */
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 12% 10%;
+
+    /* Destructive — Red */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success — Emerald */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning — Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Borders, Input, Ring */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 234 89% 60%;
+
+    /* Sidebar */
+    --sidebar: 220 16% 98%;
+    --sidebar-foreground: 224 12% 10%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 12% 10%;
+    --sidebar-border: 220 13% 91%;
+
+    /* Border Radius */
+    --radius: 0.5rem;
+
+    /*
+     * Elevation — layered, theme-aware shadows.
+     * In light mode a soft neutral shadow reads as depth; a flat `shadow-sm`
+     * is not enough to separate surfaces. These are consumed via the
+     * `shadow-elevation-*` utilities below so every card/menu shares one ramp.
+     */
+    --elevation-low: 0 1px 2px 0 hsl(224 12% 10% / 0.04), 0 1px 3px 0 hsl(224 12% 10% / 0.06);
+    --elevation-medium:
+      0 2px 4px -1px hsl(224 12% 10% / 0.06), 0 4px 12px -2px hsl(224 12% 10% / 0.08);
+    --elevation-high:
+      0 8px 24px -6px hsl(224 12% 10% / 0.12), 0 16px 48px -12px hsl(224 12% 10% / 0.16);
+
+    /*
+     * Motion — one easing curve + duration ramp for the whole app so hover,
+     * focus, and entrance timing feel coordinated rather than accidental.
+     */
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+
+    /* Chart palette — five harmonious tones for data visualization. */
+    --chart-1: 234 89% 60%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 200 95% 50%;
+  }
+
+  .dark {
+    --background: 224 12% 7%;
+    --foreground: 210 20% 95%;
+
+    --card: 224 12% 10%;
+    --card-foreground: 210 20% 95%;
+    --popover: 224 12% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 234 89% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 14%;
+    --secondary-foreground: 210 20% 95%;
+
+    --muted: 220 14% 14%;
+    --muted-foreground: 220 9% 56%;
+
+    --accent: 220 14% 14%;
+    --accent-foreground: 210 20% 95%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 234 89% 66%;
+
+    --sidebar: 224 14% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-accent: 220 14% 14%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 14% 18%;
+
+    /*
+     * Dark elevation — shadows read weakly on dark surfaces, so depth comes
+     * from a deeper cast plus a subtle top highlight ring. Kept in the same
+     * `--elevation-*` slots so utilities work identically across themes.
+     */
+    --elevation-low: 0 1px 2px 0 hsl(0 0% 0% / 0.4), inset 0 1px 0 0 hsl(0 0% 100% / 0.02);
+    --elevation-medium: 0 2px 6px -1px hsl(0 0% 0% / 0.5), 0 4px 16px -4px hsl(0 0% 0% / 0.4);
+    --elevation-high: 0 8px 28px -6px hsl(0 0% 0% / 0.6), 0 16px 56px -12px hsl(0 0% 0% / 0.5);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Heading rhythm — display headings get slightly tighter tracking and
+   * balanced wrapping so titles read as intentional typography rather than
+   * default browser text. Applies to semantic headings app-wide.
+   */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Focus ring for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Brand-consistent text selection */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.15);
+    color: hsl(var(--foreground));
+  }
+
+  /* Print stylesheet — hide shell chrome, show content only */
+  @media print {
+    nav,
+    aside,
+    header,
+    footer,
+    [role='navigation'],
+    [aria-label='Command Palette'] {
+      display: none !important;
+    }
+
+    body {
+      background: white !important;
+      color: black !important;
+    }
+
+    main {
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+}
+
+@layer utilities {
+  /*
+   * Entrance animations — used by the FadeIn/Stagger primitives and applied
+   * directly where a component isn't wrapped. Fully disabled under the
+   * reduced-motion media query below.
+   */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up var(--duration-slow) var(--ease-emphasized) both;
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Skeleton loading animation */
+  .skeleton {
+    @apply relative overflow-hidden bg-muted;
+  }
+
+  .skeleton::after {
+    @apply absolute inset-0;
+    content: '';
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--muted-foreground) / 0.08),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+}

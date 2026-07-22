@@ -14,6 +14,7 @@ export {
   RefreshTokenRecord,
   type RefreshTokenRecordProps,
 } from './entities/refresh-token-record.js';
+export { VerificationToken, type VerificationTokenProps } from './entities/verification-token.js';
 export {
   AuditLogEntry,
   AuditOutcome,
@@ -53,6 +54,8 @@ export {
   UserActivated,
   UserDeactivated,
   PasswordChanged,
+  EmailVerified,
+  PasswordResetRequested,
   UserLoggedIn,
   UserLoggedOut,
   SessionCreated,
@@ -69,6 +72,8 @@ export type {
   IPermissionRepository,
   IRefreshTokenRepository,
   IAuditLogRepository,
+  IEmailVerificationTokenRepository,
+  IPasswordResetTokenRepository,
 } from './repositories/repository-contracts.js';
 
 // Domain Service Contracts
@@ -81,4 +86,8 @@ export type {
   TokenClaims,
   IssuedTokens,
   AuthenticationResult,
+  GeneratedToken,
+  IVerificationTokenGenerator,
+  IAccountEmailNotifier,
+  AccountEmailKind,
 } from './services/domain-service-contracts.js';

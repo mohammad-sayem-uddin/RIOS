@@ -26,6 +26,7 @@ import type { AppConfig } from '../configuration/app-config.js';
 import { EnvConfigurationLoader } from '../configuration/env-configuration-loader.js';
 import type { PrismaClientInterface } from '../database/prisma-database-provider.js';
 import { PrismaDatabaseProvider } from '../database/prisma-database-provider.js';
+import { ConsoleAccountEmailNotifier } from '../email/console-account-email-notifier.js';
 import { PrismaOutboxRepositoryImpl } from '../events/prisma-outbox-repository.impl.js';
 import { InfrastructureHealthCheckService } from '../health/health-check-service.js';
 import type { LogLevelType } from '../logging/logger.js';
@@ -37,6 +38,8 @@ import { PrismaResearchProjectRepository } from '../publications/repositories/pr
 import { PrismaVenueRepository } from '../publications/repositories/prisma-venue.repository.js';
 import { ResearchIdentityAggregateMapper } from '../repositories/identity/mappers/research-identity-mapper.js';
 import { PrismaAuditLogRepository } from '../repositories/identity/prisma-audit-log-repository.js';
+import { PrismaEmailVerificationTokenRepository } from '../repositories/identity/prisma-email-verification-token-repository.js';
+import { PrismaPasswordResetTokenRepository } from '../repositories/identity/prisma-password-reset-token-repository.js';
 import { PrismaPermissionRepository } from '../repositories/identity/prisma-permission-repository.js';
 import { PrismaRefreshTokenRepository } from '../repositories/identity/prisma-refresh-token-repository.js';
 import { PrismaRoleRepository } from '../repositories/identity/prisma-role-repository.js';
@@ -55,6 +58,7 @@ import { JwtTokenProvider } from '../security/authentication/jwt-token-provider.
 import { GuidGenerator } from '../security/crypto/guid-generator.js';
 import { SecureRandomGenerator } from '../security/crypto/secure-random-generator.js';
 import { IdentitySystemClock } from '../security/crypto/system-clock.js';
+import { VerificationTokenGenerator } from '../security/crypto/verification-token-generator.js';
 import { BCryptPasswordHasher } from '../security/hashing/bcrypt-password-hasher.js';
 
 import { Container, Lifetime } from './container.js';
@@ -95,6 +99,25 @@ function normalizePrismaInput(input: unknown): unknown {
   return result;
 }
 
+/**
+ * Shallow where-clause matcher for the in-memory fake. Supports scalar equality
+ * and the `null` sentinel used for "not yet consumed/revoked" filters. Unknown
+ * operator objects (e.g. { gt: ... }) are treated as a match so callers relying
+ * on them are not silently filtered out.
+ */
+function matchesWhere(item: Record<string, unknown>, where: Record<string, unknown>): boolean {
+  for (const key of Object.keys(where)) {
+    const expected = where[key];
+    if (expected !== null && typeof expected === 'object') {
+      continue; // operator object — do not exclude
+    }
+    if (item[key] !== expected) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function createInMemoryPrismaClient(): PrismaClientInterface {
   const stores = new Map<string, Map<string, Record<string, unknown>>>();
 
@@ -124,6 +147,20 @@ export function createInMemoryPrismaClient(): PrismaClientInterface {
       findFirst: (): Promise<Record<string, unknown> | null> => {
         return Promise.resolve(Array.from(s.values())[0] ?? null);
       },
+      count: (args?: {
+        where?: { profileId?: string; publicationId?: string; projectId?: string };
+      }): Promise<number> => {
+        let list = Array.from(s.values());
+        if (args?.where?.profileId !== undefined && args.where.profileId !== '')
+          list = list.filter((i) => i.profileId === args.where?.profileId);
+        if (args?.where?.publicationId !== undefined && args.where.publicationId !== '')
+          list = list.filter((i) => i.publicationId === args.where?.publicationId);
+        if (args?.where?.projectId !== undefined && args.where.projectId !== '')
+          list = list.filter((i) => i.projectId === args.where?.projectId);
+        return Promise.resolve(list.length);
+      },
+      groupBy: (): Promise<Array<Record<string, unknown>>> => Promise.resolve([]),
+      aggregate: (): Promise<Record<string, unknown>> => Promise.resolve({}),
       findMany: (args?: {
         where?: { profileId?: string; publicationId?: string; projectId?: string; OR?: unknown[] };
       }): Promise<Array<Record<string, unknown>>> => {
@@ -160,6 +197,51 @@ export function createInMemoryPrismaClient(): PrismaClientInterface {
         const record = s.get(args.where.id) ?? { id: args.where.id };
         s.delete(args.where.id);
         return Promise.resolve(record);
+      },
+      update: (args: {
+        where: { id: string };
+        data: Record<string, unknown>;
+      }): Promise<Record<string, unknown>> => {
+        const existing = s.get(args.where.id) ?? { id: args.where.id };
+        const normalized = normalizePrismaInput(args.data) as Record<string, unknown>;
+        const record = { ...existing, ...normalized };
+        s.set(args.where.id, record);
+        return Promise.resolve(record);
+      },
+      createMany: (args: { data: Array<Record<string, unknown>> }): Promise<{ count: number }> => {
+        const rows = Array.isArray(args.data) ? args.data : [];
+        for (const row of rows) {
+          const normalized = normalizePrismaInput(row) as Record<string, unknown>;
+          const id = (normalized.id as string) ?? crypto.randomUUID();
+          s.set(id, { id, ...normalized });
+        }
+        return Promise.resolve({ count: rows.length });
+      },
+      updateMany: (args: {
+        where?: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }): Promise<{ count: number }> => {
+        const where = args.where ?? {};
+        const patch = normalizePrismaInput(args.data) as Record<string, unknown>;
+        let count = 0;
+        for (const [key, item] of s.entries()) {
+          if (matchesWhere(item, where)) {
+            s.set(key, { ...item, ...patch });
+            count++;
+          }
+        }
+        return Promise.resolve({ count });
+      },
+      deleteMany: (args?: { where?: Record<string, unknown> }): Promise<{ count: number }> => {
+        const where = args?.where ?? {};
+        let count = 0;
+        for (const [key, item] of Array.from(s.entries())) {
+          if (matchesWhere(item, where)) {
+            s.delete(key);
+            count++;
+          }
+        }
+        return Promise.resolve({ count });
       },
     };
   };
@@ -330,6 +412,31 @@ export class CompositionRoot {
       Lifetime.SINGLETON,
     );
 
+    this.container.registerFactory(
+      DITokens.EmailVerificationTokenRepository,
+      (c) => new PrismaEmailVerificationTokenRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.PasswordResetTokenRepository,
+      (c) => new PrismaPasswordResetTokenRepository(c.resolve(DITokens.DatabaseProvider)),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.VerificationTokenGenerator,
+      () => new VerificationTokenGenerator(),
+      Lifetime.SINGLETON,
+    );
+
+    this.container.registerFactory(
+      DITokens.AccountEmailNotifier,
+      () =>
+        new ConsoleAccountEmailNotifier(process.env['FRONTEND_ORIGIN'] ?? 'http://localhost:3001'),
+      Lifetime.SINGLETON,
+    );
+
     // 5. Database Provider
     this.container.registerFactory(
       DITokens.DatabaseProvider,
@@ -418,6 +525,11 @@ export class CompositionRoot {
           c.resolve(DITokens.SessionRepository),
           c.resolve(DITokens.PasswordHasher),
           c.resolve(DITokens.JwtTokenProvider),
+          c.resolve(DITokens.RoleRepository),
+          c.resolve(DITokens.EmailVerificationTokenRepository),
+          c.resolve(DITokens.PasswordResetTokenRepository),
+          c.resolve(DITokens.VerificationTokenGenerator),
+          c.resolve(DITokens.AccountEmailNotifier),
         ),
       Lifetime.SINGLETON,
     );
@@ -582,6 +694,10 @@ export class CompositionRoot {
       DITokens.PermissionRepository,
       DITokens.RefreshTokenRepository,
       DITokens.AuditLogRepository,
+      DITokens.EmailVerificationTokenRepository,
+      DITokens.PasswordResetTokenRepository,
+      DITokens.VerificationTokenGenerator,
+      DITokens.AccountEmailNotifier,
       DITokens.AuthenticationApplicationService,
       DITokens.AuthorizationApplicationService,
       DITokens.SessionApplicationService,

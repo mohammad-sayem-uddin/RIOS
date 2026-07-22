@@ -19,7 +19,25 @@ export class ResearchProjectController {
 
   public createProject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const dto = req.body as CreateResearchProjectApiRequestDto;
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const profileId =
+        (typeof body['profileId'] === 'string' && body['profileId'].trim() !== ''
+          ? body['profileId'].trim()
+          : req.user?.userId) || '00000000-0000-0000-0000-000000000000';
+      const startDate =
+        typeof body['startDate'] === 'string' && body['startDate'].trim() !== ''
+          ? body['startDate'].trim()
+          : new Date().toISOString();
+
+      const dto: CreateResearchProjectApiRequestDto = {
+        members: [],
+        ...body,
+        profileId,
+        title: typeof body['title'] === 'string' ? body['title'] : '',
+        description: typeof body['description'] === 'string' ? body['description'] : '',
+        startDate,
+      };
+
       const result = await this.service.createResearchProject(dto);
       ResultHttpMapper.mapResult(res, result, 201, req.context?.correlationId);
     } catch (err) {

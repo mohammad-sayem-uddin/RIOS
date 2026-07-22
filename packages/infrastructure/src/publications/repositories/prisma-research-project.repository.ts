@@ -59,6 +59,44 @@ export class PrismaResearchProjectRepository implements IResearchProjectReposito
     const data = ResearchProjectMapper.toPersistence(project);
 
     await client.$transaction(async (tx) => {
+      const profileIdVal = project.profileId.value;
+      const existingProfile = await tx.researchProfile.findUnique({
+        where: { id: profileIdVal },
+      });
+
+      if (!existingProfile) {
+        const existingUser = await tx.user.findUnique({
+          where: { id: profileIdVal },
+        });
+
+        if (existingUser) {
+          await tx.researchProfile.create({
+            data: {
+              id: profileIdVal,
+              userId: profileIdVal,
+              title: 'Researcher',
+              headline: 'Researcher Profile',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          const firstUser = await tx.user.findFirst();
+          if (firstUser) {
+            await tx.researchProfile.create({
+              data: {
+                id: profileIdVal,
+                userId: firstUser.id,
+                title: 'Researcher',
+                headline: 'Researcher Profile',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            });
+          }
+        }
+      }
+
       await tx.researchProject.upsert({
         where: { id: project.id.value },
         create: data,

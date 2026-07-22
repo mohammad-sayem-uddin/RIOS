@@ -53,6 +53,30 @@ export class PasswordChanged extends DomainEvent {
   }
 }
 
+export class EmailVerified extends DomainEvent {
+  public readonly eventType = 'EmailVerified';
+
+  constructor(
+    public readonly userId: string,
+    public readonly email: string,
+    metadata?: Partial<EventMetadata>,
+  ) {
+    super(userId, metadata);
+  }
+}
+
+export class PasswordResetRequested extends DomainEvent {
+  public readonly eventType = 'PasswordResetRequested';
+
+  constructor(
+    public readonly userId: string,
+    public readonly email: string,
+    metadata?: Partial<EventMetadata>,
+  ) {
+    super(userId, metadata);
+  }
+}
+
 export class UserLoggedIn extends DomainEvent {
   public readonly eventType = 'UserLoggedIn';
 

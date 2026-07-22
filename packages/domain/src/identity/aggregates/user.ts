@@ -11,6 +11,7 @@ import { AggregateRoot, Result, UniqueId } from '@rios/shared';
 import { Credential } from '../entities/credential.js';
 import { Role } from '../entities/role.js';
 import {
+  EmailVerified,
   PasswordChanged,
   RoleAssigned,
   RoleRemoved,
@@ -34,6 +35,7 @@ export interface UserProps {
   roles: Role[];
   status: UserStatusType;
   displayName: string;
+  emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date | null;
@@ -80,8 +82,31 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.lastLoginAt;
   }
 
+  public get emailVerified(): boolean {
+    return this.props.emailVerified;
+  }
+
   public isActive(): boolean {
     return this.props.status === UserStatus.ACTIVE;
+  }
+
+  public isEmailVerified(): boolean {
+    return this.props.emailVerified;
+  }
+
+  /**
+   * Marks the account email as verified. Idempotent: re-verifying an
+   * already-verified account is a no-op success (replay-safe at the aggregate
+   * level; token single-use is additionally enforced by the token store).
+   */
+  public verifyEmail(now: Date = new Date()): Result<void> {
+    if (this.props.emailVerified) {
+      return Result.ok(undefined);
+    }
+    this.props.emailVerified = true;
+    this.props.updatedAt = now;
+    this.addDomainEvent(new EmailVerified(this.userId.value, this.props.email.value));
+    return Result.ok(undefined);
   }
 
   public canAuthenticate(): boolean {
@@ -184,6 +209,7 @@ export class User extends AggregateRoot<UserProps> {
       roles: Role[];
       displayName?: string;
       status?: UserStatusType;
+      emailVerified?: boolean;
       createdAt?: Date;
       updatedAt?: Date;
       lastLoginAt?: Date | null;
@@ -213,6 +239,7 @@ export class User extends AggregateRoot<UserProps> {
         roles: [...props.roles],
         displayName,
         status: props.status ?? UserStatus.ACTIVE,
+        emailVerified: props.emailVerified ?? true,
         createdAt: now,
         updatedAt: props.updatedAt ?? now,
         lastLoginAt: props.lastLoginAt ?? null,

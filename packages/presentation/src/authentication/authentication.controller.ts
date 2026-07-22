@@ -53,10 +53,18 @@ export class AuthenticationController {
       userAgent,
     );
     if (result.isFailure) {
+      const code =
+        result.error === 'AUTH_EMAIL_NOT_VERIFIED'
+          ? 'AUTH_EMAIL_NOT_VERIFIED'
+          : 'AUTH_INVALID_CREDENTIALS';
+      const message =
+        result.error === 'AUTH_EMAIL_NOT_VERIFIED'
+          ? 'Please verify your email before signing in'
+          : result.error;
       res.status(401).json(
         ApiResponseFactory.failure({
-          code: 'AUTH_INVALID_CREDENTIALS',
-          message: result.error,
+          code,
+          message,
           correlationId: req.context?.correlationId,
         }),
       );
@@ -185,5 +193,173 @@ export class AuthenticationController {
         { correlationId: req.context?.correlationId },
       ),
     );
+  };
+
+  public register: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = req.body as {
+      email?: string;
+      password?: string;
+      displayName?: string;
+      acceptedTerms?: boolean;
+    };
+
+    if (!body.email || body.email.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'email is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    if (!body.password || body.password.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'password is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    if (body.acceptedTerms !== true) {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'acceptedTerms must be true',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+
+    const result = await this.authService.register(body.email, body.password, body.displayName);
+    if (result.isFailure) {
+      const isEmailInUse = result.error === 'AUTH_EMAIL_IN_USE';
+      res.status(isEmailInUse ? 409 : 400).json(
+        ApiResponseFactory.failure({
+          code: isEmailInUse ? 'AUTH_EMAIL_IN_USE' : 'VALIDATION_FAILED',
+          message: isEmailInUse ? 'An account with this email already exists' : result.error,
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+
+    res
+      .status(201)
+      .json(
+        ApiResponseFactory.success(result.value, { correlationId: req.context?.correlationId }),
+      );
+  };
+
+  public forgotPassword: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = req.body as { email?: string };
+    if (!body.email || body.email.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'email is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    // Always succeeds — no account enumeration
+    await this.authService.forgotPassword(body.email);
+    res
+      .status(200)
+      .json(ApiResponseFactory.success({}, { correlationId: req.context?.correlationId }));
+  };
+
+  public resetPassword: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = req.body as { token?: string; password?: string };
+    if (!body.token || body.token.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'token is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    if (!body.password || body.password.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'password is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+
+    const result = await this.authService.resetPassword(body.token, body.password);
+    if (result.isFailure) {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: result.error,
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    res
+      .status(200)
+      .json(ApiResponseFactory.success({}, { correlationId: req.context?.correlationId }));
+  };
+
+  public verifyEmail: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = req.body as { token?: string };
+    if (!body.token || body.token.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'token is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+
+    const result = await this.authService.verifyEmail(body.token);
+    if (result.isFailure) {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: result.error,
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    res
+      .status(200)
+      .json(ApiResponseFactory.success({}, { correlationId: req.context?.correlationId }));
+  };
+
+  public resendVerification: RequestHandler = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const body = req.body as { email?: string };
+    if (!body.email || body.email.trim() === '') {
+      res.status(400).json(
+        ApiResponseFactory.failure({
+          code: 'VALIDATION_FAILED',
+          message: 'email is required',
+          correlationId: req.context?.correlationId,
+        }),
+      );
+      return;
+    }
+    // Always succeeds — no account enumeration
+    await this.authService.resendVerification(body.email);
+    res
+      .status(200)
+      .json(ApiResponseFactory.success({}, { correlationId: req.context?.correlationId }));
   };
 }

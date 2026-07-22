@@ -10,6 +10,7 @@ export { EnvConfigurationLoader } from './configuration/env-configuration-loader
 
 // Database & Health
 export { PrismaDatabaseProvider } from './database/prisma-database-provider.js';
+export { createPrismaClient } from './database/prisma-client-factory.js';
 export type {
   DatabaseProvider,
   DatabaseConnectionStatusType,

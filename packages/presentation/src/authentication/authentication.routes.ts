@@ -22,6 +22,11 @@ export function createAuthenticationRouter(options: AuthenticationRoutesOptions)
   // Public authentication endpoints
   router.post('/login', controller.login);
   router.post('/refresh', controller.refresh);
+  router.post('/register', controller.register);
+  router.post('/forgot-password', controller.forgotPassword);
+  router.post('/reset-password', controller.resetPassword);
+  router.post('/verify-email', controller.verifyEmail);
+  router.post('/resend-verification', controller.resendVerification);
 
   // Protected authentication endpoints
   if (authMiddleware) {

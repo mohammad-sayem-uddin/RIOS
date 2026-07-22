@@ -135,6 +135,44 @@ export class PrismaPublicationRepository implements IPublicationRepository {
     const data = PublicationMapper.toPersistence(publication);
 
     await client.$transaction(async (tx) => {
+      const profileIdVal = publication.profileId.value;
+      const existingProfile = await tx.researchProfile.findUnique({
+        where: { id: profileIdVal },
+      });
+
+      if (!existingProfile) {
+        const existingUser = await tx.user.findUnique({
+          where: { id: profileIdVal },
+        });
+
+        if (existingUser) {
+          await tx.researchProfile.create({
+            data: {
+              id: profileIdVal,
+              userId: profileIdVal,
+              title: 'Researcher',
+              headline: 'Researcher Profile',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          const firstUser = await tx.user.findFirst();
+          if (firstUser) {
+            await tx.researchProfile.create({
+              data: {
+                id: profileIdVal,
+                userId: firstUser.id,
+                title: 'Researcher',
+                headline: 'Researcher Profile',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            });
+          }
+        }
+      }
+
       await tx.publication.upsert({
         where: { id: publication.id.value },
         create: data,

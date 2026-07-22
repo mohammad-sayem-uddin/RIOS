@@ -22,14 +22,36 @@ interface PrismaUserDelegate {
   delete(args: Record<string, unknown>): Promise<unknown>;
 }
 
+interface PrismaUserRoleDelegate {
+  deleteMany(args: Record<string, unknown>): Promise<{ count: number }>;
+  createMany(args: Record<string, unknown>): Promise<{ count: number }>;
+}
+
+interface PrismaRoleDelegate {
+  findFirst(args: Record<string, unknown>): Promise<unknown>;
+  upsert(args: Record<string, unknown>): Promise<unknown>;
+}
+
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly databaseProvider: DatabaseProvider) {}
 
-  private getClient(context?: TransactionContext): { user: PrismaUserDelegate } {
+  private getClient(context?: TransactionContext): {
+    user: PrismaUserDelegate;
+    userRole: PrismaUserRoleDelegate;
+    role: PrismaRoleDelegate;
+  } {
     if (context !== undefined && context.handle !== undefined && context.handle !== null) {
-      return context.handle as { user: PrismaUserDelegate };
+      return context.handle as {
+        user: PrismaUserDelegate;
+        userRole: PrismaUserRoleDelegate;
+        role: PrismaRoleDelegate;
+      };
     }
-    return this.databaseProvider.getClient() as { user: PrismaUserDelegate };
+    return this.databaseProvider.getClient() as {
+      user: PrismaUserDelegate;
+      userRole: PrismaUserRoleDelegate;
+      role: PrismaRoleDelegate;
+    };
   }
 
   public async findById(id: UserId, context?: TransactionContext): Promise<Result<User | null>> {
@@ -108,6 +130,7 @@ export class PrismaUserRepository implements IUserRepository {
           passwordHash: persistenceModel.passwordHash,
           displayName: persistenceModel.displayName,
           status: persistenceModel.status,
+          emailVerified: persistenceModel.emailVerified ?? false,
           createdAt: persistenceModel.createdAt,
           updatedAt: persistenceModel.updatedAt,
         },
@@ -116,9 +139,32 @@ export class PrismaUserRepository implements IUserRepository {
           passwordHash: persistenceModel.passwordHash,
           displayName: persistenceModel.displayName,
           status: persistenceModel.status,
+          emailVerified: persistenceModel.emailVerified ?? false,
           updatedAt: persistenceModel.updatedAt,
         },
       });
+
+      // Sync the UserRole join table so roles round-trip on reload.
+      // Each role is upserted (roles are shared reference data), then the
+      // join is fully replaced with the aggregate's current role set.
+      await client.userRole.deleteMany({ where: { userId: persistenceModel.id } });
+      const roleLinks: Array<{ userId: string; roleId: string }> = [];
+      for (const r of user.roles) {
+        const roleId = r.roleId.value;
+        await client.role.upsert({
+          where: { id: roleId },
+          create: {
+            id: roleId,
+            name: r.name,
+            description: r.description ?? null,
+          },
+          update: { name: r.name },
+        });
+        roleLinks.push({ userId: persistenceModel.id, roleId });
+      }
+      if (roleLinks.length > 0) {
+        await client.userRole.createMany({ data: roleLinks });
+      }
 
       return Result.ok(undefined);
     } catch (error) {
